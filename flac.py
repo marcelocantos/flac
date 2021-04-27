@@ -1,8 +1,23 @@
 #!/usr/bin/env python3
 
-import collections
+import pickle
+import random
 import re
 import sqlite3
+
+class default:
+    class _naught:
+        pass
+
+    def __init__(self, d, ctor):
+        self._d = d
+        self._ctor = ctor
+
+    def __getitem__(self, key):
+        v = self._d.get(key, default._naught())
+        if isinstance(v, default._naught):
+            self._d[key] = v = self._ctor()
+        return v
 
 def load_data():
     forward = {
@@ -12,55 +27,207 @@ def load_data():
         for cols in [line.rstrip().split('\t')]
         for (pinyin, tones) in [(cols[0], cols[1:])]
         for (i, tone) in enumerate(tones)
+        if tone
     }
-    reverse = collections.defaultdict(lambda: collections.defaultdict(set))
+    reverse = {}
     for (pinyin, tone), words in forward.items():
         for word in words:
-            reverse[word][pinyin].add(tone)
+            default(default(reverse, lambda: {})[word], set)[pinyin].add(tone)
     return (forward, reverse)
 
 class Prompter:
     def ask(self, word):
         self.word = word
-        self.text = input(self.word + ' — ')
+        self.text = input('\n\033[A%s — ' % (self.word,))
         return self.text
 
-    def check(self, ok, fmt=None, *args):
+    def check(self, final, ok, fmt=None, *args):
         if fmt is None:
             fmt = ''
-        indent = 2*len(self.word) + 3 + len(self.text)
-        outcome = '✅' if ok else '❌'
-        print('\033[A\033[%dC  %s \033[1;31m%s\033[0m' % (indent, outcome, '' if ok else fmt % args))
+        outcome = (
+            ' ❌' if not ok else
+            '\033[%dD✅\033[K' % (len(self.text),) if final else
+            '')
+        format = '%s %s' if '\v' in fmt else '%s\v %s'
+        self.message(format % (outcome, '' if ok else fmt % args), wait=not ok)
         return ok
+
+    def message(self, m, wait):
+        indent = 2*len(self.word) + 3 + len(self.text)
+        print('\033[A\033[%dC%s' % (indent, m.replace('\v', '')), end='')
+        if wait:
+            input()
+            print('\033[A\033[%dC\033[K%s' % (indent, m.split('\v')[0]))
+        else:
+            print()
+
+pinyinColors = {
+    1: 31,
+    2: 32,
+    3: 34,
+    4: 35,
+    5: 30,
+}
+
+def pinyinColor(pinyin, tone):
+    return '\033[1;%dm%s\033[0m' % (pinyinColors[tone], pinyin)
+
+vowels = {
+    'a': ' āáǎàa',
+    'e': ' ēéěèe',
+    'i': ' īíǐìi',
+    'o': ' ōóǒòo',
+    'u': ' ūúǔùu',
+    'ü': ' ǖǘǚǜü',
+}
+
+def accent(pinyin, tone):
+    chars = list(pinyin)
+    v = sum(c in vowels for c in chars)
+    # https://en.wikipedia.org/wiki/Pinyin#Rules_for_placing_the_tone_mark
+    if v == 1:
+        for i, c in enumerate(chars):
+            if c in vowels:
+                chars[i] = vowels[c][tone]
+                break
+    elif 'a' in pinyin or 'e' in pinyin:
+        for i, c in enumerate(chars):
+            if c in 'ae':
+                chars[i] = vowels[c][tone]
+                break
+    elif 'ou' in pinyin:
+        for i, c in enumerate(chars):
+            if c == 'o':
+                chars[i] = vowels[c][tone]
+                break
+    else:
+        for i in range(len(chars) - 1, -1, -1):
+            c = chars[i]
+            if c in vowels:
+                chars[i] = vowels[c][tone]
+                break
+    return pinyinColor(''.join(chars), tone)
+
+def pinyinTones(pinyin, tones):
+    return '/'.join(accent(pinyin, t) for t in tones)
+
+# class scoredb:
+#     def __init__(self):
+#         self.db = sqlite3.connect('flac.db')
+#         self.db.execute('create table if not exists word_has_score (word primary key, score)')
+
+#     def getscore(self, word):
+#         with self.db.cursor() as cur:
+#             cur.execute('select score from word_has_score where word = ?', (word,))
+#             results = cur.fetchall()
+#             return results[0][0] if results else 0
+
+#     def setscore(self, word, score):
+#         with self.db.cursor() as cur:
+#             cur.execute('replace into word_has_score (word, score) values (?, ?)', (word, score))
+
+class srsqueue:
+    def __init__(self, words):
+        try:
+            with open('queue.pickle', 'rb') as f:
+                data = pickle.load(f)
+                self.queue = [w for w in data['queue'] if w in words]
+                self.scores = data['scores']
+                new = words - set(self.queue)
+                random.shuffle(new)
+                self.queue += new
+        except FileNotFoundError:
+            self.queue = list(words)
+            random.shuffle(self.queue)
+            self.scores = {}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *ex):
+        with open('queue.pickle', 'wb') as f:
+            pickle.dump({
+                'queue': self.queue,
+                'scores': self.scores,
+            }, f)
+
+    def next(self):
+        return self.queue[0]
+
+    def good(self):
+        self.bump(2, 1)
+
+    def bad(self):
+        self.bump(0, 1)
+
+    def skipped(self):
+        self.bump(8, 1)
+
+    def bump(self, m, d):
+        w = self.next()
+        score = self.scores.get(w, 8) * m // d
+        if score < 4:
+            score = 4
+        self.scores[w] = score
+        pos = random.randint(score, 3 * score / 2)
+        i = min(pos, len(self.queue) - 1)
+        self.queue = self.queue[1:i+1] + self.queue[:1] + self.queue[i+1:]
 
 def main():
     (forward, reverse) = load_data()
-    print(forward)
-    print(reverse)
-    map = collections.defaultdict()
+    # print(forward)
+    # print(reverse)
+    # db = scoredb()
+
+    def correction(phrase):
+        return ' '.join(
+            '/'.join(pinyinTones(*i) for i in reverse[c].items())
+            for c in phrase
+        )
+
+    def lookup(pinyins):
+        lookups = ', '.join(
+            '%s = %s' % (accent(pinyin, tone), forward.get((pinyin, tone), '∅'))
+            for p in pinyins
+            for (pinyin, tone) in [(p[:-1], int(p[-1]))]
+        )
+        return '(' + lookups + ')'
 
     prompter = Prompter()
     wsRE = re.compile(r'\s+')
     pinyinRE = re.compile(r'[a-zéü]+\d')
-    while True:
-        phrase = '你好'
-        text = prompter.ask(phrase)
-        pinyins = pinyinRE.findall(text)
-        if prompter.check(
-            sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
-            'unrecognised elements: %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
-        ) and prompter.check(
-            len(phrase) == len(pinyins),
-            'character count mismatch: %s has %d characters; %s has %d pinyins words' % (phrase, len(phrase), text, len(pinyins)),
-        ) and prompter.check(
-            all(
-                c in forward.get((word, tone), '')
-                for (c, pinyin) in zip(phrase, pinyins)
-                for (word, tone) in [(pinyin[:-1], int(pinyin[-1]))]
-            ),
-            'mismatched pinyin, correct form is: ' + ' '.join([''.join('%s%s' % (pinyin, ''.join(str(t) for t in tones)) for (pinyin, tones) in reverse[c].items()) for c in phrase])
-        ):
-            break
+    with srsqueue(set(reverse)) as q:
+        while True:
+            phrase = q.next()
+            text = prompter.ask(phrase)
+            if not text:
+                prompter.message('\v' + correction(phrase), wait=True)
+                q.skipped()
+                continue
+
+            pinyins = [p.replace('v', 'ü') for p in pinyinRE.findall(text)]
+            if prompter.check(
+                False,
+                sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
+                '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
+            ) and prompter.check(
+                False,
+                len(phrase) == len(pinyins),
+                ('\033[1;31mcharacter count mismatch\033[0m: %s has %d characters; %s has %d pinyins words'
+                    % (phrase, len(phrase), text, len(pinyins))
+                ),
+            ) and prompter.check(
+                True,
+                all(
+                    c in forward.get((word, tone), '')
+                    for (c, pinyin) in zip(phrase, pinyins)
+                    for (word, tone) in [(pinyin[:-1], int(pinyin[-1]))]
+                ),
+                '%s\v %s', lookup(pinyins), correction(phrase)
+            ):
+                q.good()
+            else:
+                q.bad()
 
 if __name__ == '__main__':
     main()
