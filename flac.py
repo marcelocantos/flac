@@ -39,7 +39,7 @@ def main():
 
     prompter = Prompter()
     wsRE = re.compile(r'\s+')
-    pinyinRE = re.compile(r'\w+\d')
+    pinyinRE = re.compile(r'[a-zéü]+\d')
     while True:
         phrase = '你好'
         text = prompter.ask(phrase)
