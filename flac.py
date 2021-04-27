@@ -13,10 +13,11 @@ def load_data():
         for (pinyin, tones) in [(cols[0], cols[1:])]
         for (i, tone) in enumerate(tones)
     }
-    # reverse = collections.defaultdict(set)
-    # for pinyin, tones in forward.items():
-    #     for 
-    return forward
+    reverse = collections.defaultdict(lambda: collections.defaultdict(set))
+    for (pinyin, tone), words in forward.items():
+        for word in words:
+            reverse[word][pinyin].add(tone)
+    return (forward, reverse)
 
 class Prompter:
     def ask(self, word):
@@ -33,8 +34,9 @@ class Prompter:
         return ok
 
 def main():
-    data = load_data()
-    print(data)
+    (forward, reverse) = load_data()
+    print(forward)
+    print(reverse)
     map = collections.defaultdict()
 
     prompter = Prompter()
@@ -52,11 +54,11 @@ def main():
             'character count mismatch: %s has %d characters; %s has %d pinyins words' % (phrase, len(phrase), text, len(pinyins)),
         ) and prompter.check(
             all(
-                c in data.get((word, tone), '')
+                c in forward.get((word, tone), '')
                 for (c, pinyin) in zip(phrase, pinyins)
                 for (word, tone) in [(pinyin[:-1], int(pinyin[-1]))]
             ),
-            'mismatched pinyin, correct form is: '
+            'mismatched pinyin, correct form is: ' + ' '.join([''.join('%s%s' % (pinyin, ''.join(str(t) for t in tones)) for (pinyin, tones) in reverse[c].items()) for c in phrase])
         ):
             break
 
