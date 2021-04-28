@@ -178,8 +178,8 @@ def main():
     pinyinRE = re.compile(r'([a-zü]+)(\d+)')
 
     (forward, reverse) = load_data()
-    print(forward)
-    print(reverse)
+    # print(forward)
+    # print(reverse)
     # db = scoredb()
 
     def check(c, pinyins):
