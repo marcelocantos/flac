@@ -38,7 +38,7 @@ def load_data():
 class Prompter:
     def ask(self, word):
         self.word = word
-        self.text = input('\n\033[A%s — ' % (self.word,))
+        self.text = input('\n\033[A%s — \033[K' % (self.word,))
         return self.text
 
     def check(self, final, ok, fmt=None, *args):
@@ -109,7 +109,7 @@ def accent(pinyin, tone):
     return pinyinColor(''.join(chars), tone)
 
 def pinyinTones(pinyin, tones):
-    return '/'.join(accent(pinyin, t) for t in tones)
+    return '/'.join(accent(pinyin, t) for t in sorted(tones))
 
 # class scoredb:
 #     def __init__(self):
@@ -174,10 +174,23 @@ class srsqueue:
         self.queue = self.queue[1:i+1] + self.queue[:1] + self.queue[i+1:]
 
 def main():
+    wsRE = re.compile(r'[\s/]+')
+    pinyinRE = re.compile(r'([a-zü]+)(\d+)')
+
     (forward, reverse) = load_data()
-    # print(forward)
-    # print(reverse)
+    print(forward)
+    print(reverse)
     # db = scoredb()
+
+    def check(c, pinyins):
+        rev = {}
+        for p in pinyins:
+            (word, tones) = pinyinRE.match(p).groups()
+            default(rev, set)[word].update(int(t) for t in tones)
+        # print(rev)
+        # print(reverse[c])
+        return rev == reverse[c]
+                    # c in forward.get((word, tone), '')
 
     def correction(phrase):
         return ' '.join(
@@ -185,45 +198,38 @@ def main():
             for c in phrase
         )
 
-    def lookup(pinyins):
+    def lookup(c, pinyins):
         lookups = ', '.join(
             '%s = %s' % (accent(pinyin, tone), forward.get((pinyin, tone), '∅'))
             for p in pinyins
-            for (pinyin, tone) in [(p[:-1], int(p[-1]))]
+            for (pinyin, tones) in pinyinRE.findall(p)
+            for tone in sorted(tones)
+            for tone in [int(tone)]
+            if c not in forward.get((pinyin, tone), '')
         )
         return '(' + lookups + ')'
 
     prompter = Prompter()
-    wsRE = re.compile(r'\s+')
-    pinyinRE = re.compile(r'[a-zéü]+\d')
     with srsqueue(set(reverse)) as q:
         while True:
-            phrase = q.next()
-            text = prompter.ask(phrase)
+            char = q.next()
+            text = prompter.ask(char)
             if not text:
-                prompter.message('\v' + correction(phrase), wait=True)
+                prompter.message('\v' + correction(char), wait=True)
                 q.skipped()
                 continue
 
-            pinyins = [p.replace('v', 'ü') for p in pinyinRE.findall(text)]
-            if prompter.check(
+            pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
+            if not prompter.check(
                 False,
                 sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
                 '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
-            ) and prompter.check(
-                False,
-                len(phrase) == len(pinyins),
-                ('\033[1;31mcharacter count mismatch\033[0m: %s has %d characters; %s has %d pinyins words'
-                    % (phrase, len(phrase), text, len(pinyins))
-                ),
-            ) and prompter.check(
+            ):
+                print('\033[A', end='')
+            elif prompter.check(
                 True,
-                all(
-                    c in forward.get((word, tone), '')
-                    for (c, pinyin) in zip(phrase, pinyins)
-                    for (word, tone) in [(pinyin[:-1], int(pinyin[-1]))]
-                ),
-                '%s\v %s', lookup(pinyins), correction(phrase)
+                check(char, pinyins),
+                '%s\v %s', lookup(char, pinyins), correction(char)
             ):
                 q.good()
             else:
