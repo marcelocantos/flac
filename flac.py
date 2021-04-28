@@ -165,9 +165,10 @@ class srsqueue:
 
     def bump(self, m, d):
         w = self.next()
-        score = self.scores.get(w, 8) * m // d
+        score = self.scores.get(w, 8)
         if score < 4:
             score = 4
+        score = score * m // d
         self.scores[w] = score
         pos = random.randint(score, 3 * score / 2)
         i = min(pos, len(self.queue) - 1)
