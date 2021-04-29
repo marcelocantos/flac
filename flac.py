@@ -45,7 +45,7 @@ class Prompter:
         if fmt is None:
             fmt = ''
         outcome = (
-            ' ❌' if not ok else
+            '\033[%dC❌' % (max(8 - len(self.text), 0),) if not ok else
             '\033[%dD✅\033[K' % (len(self.text),) if final else
             '')
         format = '%s %s' if '\v' in fmt else '%s\v %s'
