@@ -158,17 +158,14 @@ class srsqueue:
         self.bump(2, 1)
 
     def bad(self):
-        self.bump(0, 1)
+        self.bump(1, 16)
 
     def skipped(self):
         self.bump(8, 1)
 
     def bump(self, m, d):
         w = self.next()
-        score = self.scores.get(w, 8)
-        if score < 4:
-            score = 4
-        score = score * m // d
+        score = max(max(self.scores.get(w, 8), 4) * m // d, 4)
         self.scores[w] = score
         pos = random.randint(score, 3 * score / 2)
         i = min(pos, len(self.queue) - 1)
