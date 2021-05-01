@@ -126,20 +126,26 @@ def pinyinTones(pinyin, tones):
 #         with self.db.cursor() as cur:
 #             cur.execute('replace into word_has_score (word, score) values (?, ?)', (word, score))
 
-class srsqueue:
+def clamp(lo, hi):
+    return lambda x: min(max(lo, x), hi)
+
+# SRSQueue manages test words in a priority queue, bumping words up and down the
+# queue depending the result of each test.
+class SRSQueue:
     def __init__(self, words):
         try:
             with open('queue.pickle', 'rb') as f:
                 data = pickle.load(f)
                 self.queue = [w for w in data['queue'] if w in words]
                 self.scores = data['scores']
-                new = words - set(self.queue)
-                random.shuffle(new)
-                self.queue += new
         except FileNotFoundError:
-            self.queue = list(words)
-            random.shuffle(self.queue)
+            self.queue = []
             self.scores = {}
+        new = words - set(self.queue)
+        random.shuffle(new)
+        self.queue += new
+        last = len(self.queue) - 1
+        self.clamp = clamp(-last, last)
 
     def __enter__(self):
         return self
@@ -151,25 +157,31 @@ class srsqueue:
                 'scores': self.scores,
             }, f)
 
-    def next(self):
+    def head(self):
         return self.queue[0]
 
+    # good > 0, skip < 0
+    def score(self):
+        return self.scores.get(self.head(), 0)
+
+    # Bump back a little with slow exponential growth.
     def good(self):
-        self.bump(2, 1)
+        self.bump(max(self.score(), 2)*3//2)
 
+    # Bump back a lot with rapid exponential growth.
+    def skip(self):
+        self.bump(min(self.score(), -50)*4)
+
+    # Bump forward all the way to head with rapid exponential approach.
     def bad(self):
-        self.bump(1, 16)
+        self.bump(max(self.score(), 0)//8)
 
-    def skipped(self):
-        self.bump(8, 1)
-
-    def bump(self, m, d):
-        w = self.next()
-        score = max(max(self.scores.get(w, 8), 4) * m // d, 4)
-        self.scores[w] = score
-        pos = random.randint(score, 3 * score / 2)
-        i = min(pos, len(self.queue) - 1)
-        self.queue = self.queue[1:i+1] + self.queue[:1] + self.queue[i+1:]
+    def bump(self, score):
+        self.scores[self.head()] = self.clamp(score)
+        i = random.randint(abs(score), self.clamp(abs(score)*3//2))
+        if i:
+            w = self.queue.pop(0)
+            self.queue.insert(i, w)
 
 def main():
     wsRE = re.compile(r'[\s/]+')
@@ -205,16 +217,18 @@ def main():
             for tone in [int(tone)]
             if c not in forward.get((pinyin, tone), '')
         )
-        return '(' + lookups + ')'
+        return lookups and '(' + lookups + ')'
 
     prompter = Prompter()
-    with srsqueue(set(reverse)) as q:
+    with SRSQueue(set(reverse)) as q:
         while True:
-            char = q.next()
-            text = prompter.ask(char)
-            if not text:
-                prompter.message('\v' + correction(char), wait=True)
-                q.skipped()
+            char = q.head()
+            while True:
+                text = prompter.ask(char)
+                if text:
+                    break
+                prompter.check(False, False, '\v' + correction(char))
+                q.bad()
                 continue
 
             pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
