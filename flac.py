@@ -141,7 +141,7 @@ class SRSQueue:
         except FileNotFoundError:
             self.queue = []
             self.scores = {}
-        new = words - set(self.queue)
+        new = list(words - set(self.queue))
         random.shuffle(new)
         self.queue += new
         last = len(self.queue) - 1
