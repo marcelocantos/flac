@@ -248,6 +248,7 @@ def main():
             ):
                 q.good()
             else:
+                print('\033[A\033[5C\033[%s;9m%s\033[0m\033[K' % (color, text))
                 q.bad()
 
 if __name__ == '__main__':
