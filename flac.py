@@ -174,7 +174,7 @@ class SRSQueue:
 
     # Bump forward all the way to head with rapid exponential approach.
     def bad(self):
-        self.bump(max(self.score(), 0)//8)
+        self.bump(max(self.score()//8, 1))
 
     def bump(self, score):
         self.scores[self.head()] = self.clamp(score)
@@ -223,8 +223,11 @@ def main():
     with SRSQueue(set(reverse)) as q:
         while True:
             char = q.head()
+            color = '0' if q.scores.get(char) else '1;37'
+            p = '\033[%sm%s\033[0m' % (color, char)
             while True:
-                text = prompter.ask(char)
+                # Print new characters in bright white.
+                text = prompter.ask(p)
                 if text:
                     break
                 prompter.check(False, False, '\v' + correction(char))
