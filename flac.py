@@ -226,7 +226,7 @@ def main():
             color = '0' if q.scores.get(char) else '1;37'
             p = '\033[%sm%s\033[0m' % (color, char)
             while True:
-                # Print new characters in bright white.
+                # Print new characters in bold.
                 text = prompter.ask(p)
                 if text:
                     break
