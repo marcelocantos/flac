@@ -220,7 +220,10 @@ def main():
 
     def lookup(c, pinyins):
         lookups = ', '.join(
-            '%s = %s' % (accent(pinyin, tone), forward.get((pinyin, tone), '∅'))
+            '%s = %s' % (
+                accent(pinyin, tone),
+                forward.get((pinyin, tone), '\033[1;30m∅\033[0m'),
+            )
             for p in pinyins
             for (pinyin, tones) in pinyinRE.findall(p)
             for tone in sorted(tones)
