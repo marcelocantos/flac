@@ -20,26 +20,36 @@ class default:
         return v
 
 def load_data():
-    forward = {
-        (pinyin, 1 + i): tone
+    entries = {
+        pinyin: tones
         for line in open('flac.data').readlines()
         if line.rstrip() and 'ā' not in line
         for cols in [line.rstrip().split('\t')]
         for (pinyin, tones) in [(cols[0], cols[1:])]
+    }
+
+    syllables = set(entries.keys())
+
+    forward = {
+        (pinyin, 1 + i): tone
+        for (pinyin, tones) in entries.items()
         for (i, tone) in enumerate(tones)
         if tone
     }
+
     reverse = {}
     for (pinyin, tone), words in forward.items():
         for word in words:
             default(default(reverse, lambda: {})[word], set)[pinyin].add(tone)
-    return (forward, reverse)
+
+    return (syllables, forward, reverse)
 
 class Prompter:
-    def ask(self, word):
+    def ask(self, word, new):
+        color = '1;37' if new else '0'
         self.word = word
-        self.text = input('\n\033[A%s — \033[K' % (self.word,))
-        return self.text
+        self.text = input('\n\033[A\033[%sm%s\033[0m — \033[K' % (color, word))
+        return self.text, color
 
     def check(self, final, ok, fmt=None, *args):
         if fmt is None:
@@ -187,7 +197,7 @@ def main():
     wsRE = re.compile(r'[\s/]+')
     pinyinRE = re.compile(r'([a-zü]+)(\d+)')
 
-    (forward, reverse) = load_data()
+    (syllables, forward, reverse) = load_data()
     # print(forward)
     # print(reverse)
     # db = scoredb()
@@ -221,24 +231,38 @@ def main():
 
     prompter = Prompter()
     with SRSQueue(set(reverse)) as q:
+        goods = ''
         while True:
             char = q.head()
-            color = '0' if q.scores.get(char) else '1;37'
-            p = '\033[%sm%s\033[0m' % (color, char)
+            new = not q.scores.get(char)
             while True:
                 # Print new characters in bold.
-                text = prompter.ask(p)
+                text, color = prompter.ask(char, new)
                 if text:
                     break
                 prompter.check(False, False, '\v' + correction(char))
+                goods = ''
                 q.bad()
                 continue
 
             pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
+            sylls = [
+                s
+                for p in pinyins
+                for m in [pinyinRE.match(p)]
+                if m
+                for s in [m.group(1)]
+            ]
             if not prompter.check(
                 False,
                 sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
                 '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
+            ) or not prompter.check(
+                False,
+                all(s in syllables for s in sylls),
+                '\033[1;31minvalid syllable%s: %s',
+                's' if sum(s not in syllables for s in sylls) > 1 else '',
+                ' '.join(s for s in sylls if s not in syllables),
             ):
                 print('\033[A', end='')
             elif prompter.check(
@@ -246,9 +270,14 @@ def main():
                 check(char, pinyins),
                 '%s\v %s', lookup(char, pinyins), correction(char)
             ):
+                if goods:
+                    print('\033[A', end='')
+                goods += char
+                print('\033[A\033[1;32m%s\033[J' % (goods,))
                 q.good()
             else:
-                print('\033[A\033[5C\033[%s;9m%s\033[0m\033[K' % (color, text))
+                goods = ''
+                print('\033[A\033[5C\033[%s31;9m%s\033[0m\033[K' % (color, text))
                 q.bad()
 
 if __name__ == '__main__':
