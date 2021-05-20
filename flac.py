@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 
 import collections
+import contextlib
 import math
 import pickle
 import random
 import re
-import sqlite3
-import time
+import shutil
+import sys
+
+def termwidth():
+    return shutil.get_terminal_size().columns
+
+def dots(score):
+    return math.log(max(1, score), 1.5)
 
 def scorerepr(score):
     if score <= 0:
         return ''
-    logscore = int(math.log(score, 1.5))
+    logscore = int(dots(score))
     s = ''
     while logscore > 7:
         s += '⣿'
@@ -61,11 +68,14 @@ def load_data():
     return (syllables, forward, reverse)
 
 class Prompter:
-    def ask(self, word, score):
+    def ask(self, word, score, togo):
         new = score == 0
         color = '1;37' if new else '0'
         self.word = word
-        self.text = input('\n\033[A\033[%sm%s\033[1;30m%-2s\033[0m — \033[K' % (color, word, scorerepr(score)))
+        # print('' % (), end='')
+        self.text = input(
+            '\n\033[A\033[K\033[%dG%d\033[G\033[%sm%s\033[1;30m%-2s\033[0m — '
+            % (termwidth() - 4, togo, color, word, scorerepr(score)))
         return self.text, color
 
     def check(self, final, ok, fmt=None, *args):
@@ -156,21 +166,40 @@ def pinyinTones(pinyin, tones):
 def clamp(lo, hi):
     return lambda x: min(max(lo, x), hi)
 
+# autopickle loads a pickle (with a default fallback) and saves it out later.
+@contextlib.contextmanager
+def autopickle(filename, default):
+    try:
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+    except FileNotFoundError:
+        data = default
+
+    yield data
+
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+# queuedata loads queue data from the pickle
+@contextlib.contextmanager
+def queuedata(words):
+    with autopickle('queue.pickle', {'queue': [], 'scores': {}}) as data:
+        queue = [w for w in data['queue'] if w in words]
+        new = list(words - set(queue))
+        if new:
+            random.shuffle(new)
+            queue += new
+            data['queue'] = queue
+        yield data
+
+
 # SRSQueue manages test words in a priority queue, bumping words up and down the
 # queue depending the result of each test.
 class SRSQueue:
-    def __init__(self, words):
-        try:
-            with open('queue.pickle', 'rb') as f:
-                data = pickle.load(f)
-                self.queue = [w for w in data['queue'] if w in words]
-                self.scores = data['scores']
-        except FileNotFoundError:
-            self.queue = []
-            self.scores = {}
-        new = list(words - set(self.queue))
-        random.shuffle(new)
-        self.queue += new
+    def __init__(self, data):
+        self.data = data
+        self.queue = data['queue']
+        self.scores = data['scores']
         last = len(self.queue) - 1
         self.clamp = clamp(-last, last)
         self.goods = [0, 0]
@@ -182,11 +211,8 @@ class SRSQueue:
         return self
 
     def __exit__(self, *ex):
-        with open('queue.pickle', 'wb') as f:
-            pickle.dump({
-                'queue': self.queue,
-                'scores': self.scores,
-            }, f)
+        self.data['queue'] = [q for q in self.queue if q]
+        self.data['scores'] = self.scores
 
     def report(self):
         return ('''
@@ -212,7 +238,7 @@ class SRSQueue:
         hist = collections.defaultdict(int)
         maxs = 0
         for s in self.scores.values():
-            s = int(math.log(s, 1.5))
+            s = int(dots(s))
             maxs = max(maxs, s)
             hist[s] += 1
         bars = [
@@ -238,22 +264,48 @@ class SRSQueue:
 
     # Bump forward all the way to head with rapid exponential approach.
     def bad(self, easy):
-        self.bump(max(self.score()//8, 1))
+        self.bump(max(self.score()//8, 1), 5)
         self.bads[easy] += 1
 
-    # Same as skip, but records as a skip instead of a bad.
+    # Same outcome as skip, but records as a skip instead of a bad.
     def skip(self):
         self.bump(max(self.score()//8, 1))
         self.skips += 1
 
-    def bump(self, score):
+    def bump(self, score, maxpos=math.inf):
+        score = self.clamp(score)
         head = self.head()
         self.chars.add(head)
-        self.scores[head] = self.clamp(score)
-        i = random.randint(abs(score), self.clamp(abs(score)*3//2))
+        self.scores[head] = score
+        p = min(abs(score), maxpos)
+        i = random.randint(p, self.clamp(p*3//2))
         if i:
             w = self.queue.pop(0)
             self.queue.insert(i, w)
+
+def focusqueue(queue, chars):
+    queuechars = set(queue)
+    focuschars = chars & queuechars
+    nonchars = chars - queuechars
+    print('non-chars:', ''.join(sorted(nonchars)))
+    blurchars = [c for c in queue if c not in focuschars]
+    focuschars = [c for c in queue if c in focuschars]
+    print('focus (%d): %s' % (len(focuschars), ''.join(focuschars)))
+    return focuschars + [None] + blurchars, focuschars
+
+def focusreport(fscores):
+    fscores = sorted(fscores)
+    n = len(fscores)
+    percentiles = [0]
+    if n >= 5:
+        percentiles.append(n//4)
+    if n >= 3:
+        percentiles.append(n//2)
+    if n >= 5:
+        percentiles.append(n*3//4)
+    if n >= 2:
+        percentiles.append(n - 1)
+    return '  '.join('%4.1f' % (dots(fscores[p]),) for p in percentiles)
 
 def main():
     wsRE = re.compile(r'[\s/]+')
@@ -264,113 +316,131 @@ def main():
     # print(reverse)
     # db = scoredb()
 
-    def check(c, pinyins):
-        rev = {}
-        for p in pinyins:
-            (word, tones) = pinyinRE.match(p).groups()
-            default(rev, set)[word].update(int(t) for t in tones)
-        # print(rev)
-        # print(reverse[c])
-        return rev == reverse[c]
-                    # c in forward.get((word, tone), '')
+    fscores = None
+    with queuedata(set(reverse)) as data:
+        scores = data['scores']
 
-    def correction(phrase):
-        return ' '.join(
-            '/'.join(pinyinTones(*i) for i in reverse[c].items())
-            for c in phrase
-        )
+        if sys.argv[1:2] == ['--focus']:
+            data['queue'], focuschars = focusqueue(data['queue'], set(sys.argv[2]))
+            fscores = [scores.get(c, 0) for c in focuschars]
 
-    def lookup(c, pinyintones):
-        lookups = ', '.join(
-            '%s = %s' % (
-                accent(pinyin, tone),
-                forward.get((pinyin, tone), '\033[1;30m∅\033[0m'),
+        def check(c, pinyins):
+            rev = {}
+            for p in pinyins:
+                (word, tones) = pinyinRE.match(p).groups()
+                default(rev, set)[word].update(int(t) for t in tones)
+            # print(rev)
+            # print(reverse[c])
+            return rev == reverse[c]
+                        # c in forward.get((word, tone), '')
+
+        def correction(phrase):
+            return ' '.join(
+                '/'.join(pinyinTones(*i) for i in reverse[c].items())
+                for c in phrase
             )
-            for (pinyin, tones) in pinyintones
-            for tone in sorted(tones)
-            for tone in [int(tone)]
-            if c not in forward.get((pinyin, tone), '')
-        )
-        return lookups and '(' + lookups + ')'
 
-    def lookuptext(c, pinyins):
-        return lookup(c, (pt for p in pinyins for pt in pinyinRE.findall(p)))
+        def lookup(c, pinyintones):
+            lookups = ', '.join(
+                '%s = %s' % (
+                    accent(pinyin, tone),
+                    forward.get((pinyin, tone), '\033[1;30m∅\033[0m'),
+                )
+                for (pinyin, tones) in pinyintones
+                for tone in sorted(tones)
+                for tone in [int(tone)]
+                if c not in forward.get((pinyin, tone), '')
+            )
+            return lookups and '(' + lookups + ')'
 
-    prompter = Prompter()
-    with SRSQueue(set(reverse)) as q:
-        goods = ''
-        tests = 0
-        prevChar = None
-        rounds = 100
-        while tests < rounds:
-            char = q.head()
-            done = False
+        def lookuptext(c, pinyins):
+            return lookup(c, (pt for p in pinyins for pt in pinyinRE.findall(p)))
+
+        prompter = Prompter()
+        with SRSQueue(data) as q:
+            goods = ''
+            tests = 0
+            prevChar = None
+            rounds = 100
             while True:
-                score = q.scores.get(char, 0)
-                # Print new characters in bold.
-                try:
-                    text, color = prompter.ask(char, score)
-                except EOFError:
-                    done = True
+                togo = q.queue.index(None) if fscores else rounds - tests
+                if togo <= 0:
                     break
-                if text:
+                char = q.head()
+                done = False
+                while True:
+                    score = q.scores.get(char, 0)
+                    # Print new characters in bold.
+                    try:
+                        text, color = prompter.ask(char, score, togo)
+                    except EOFError:
+                        done = True
+                        break
+                    if text:
+                        break
+                    prompter.check(False, False, '\v%s %s' % (
+                        correction(char),
+                        lookup('!', reverse[char].items()),
+                    ))
+                    goods = ''
+                    q.skip()
+                    prevChar = char
+                if done:
+                    print()
                     break
-                prompter.check(False, False, '\v%s %s' % (
-                    correction(char),
-                    lookup('!', reverse[char].items()),
-                ))
-                goods = ''
-                q.skip()
-                prevChar = char
-            if done:
-                print()
-                break
 
-            easy = prevChar == char
-            if not easy:
-                prevChar = char
-                tests += 1
+                easy = prevChar == char
+                if not easy:
+                    prevChar = char
+                    tests += 1
 
-            pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
-            sylls = [
-                s
-                for p in pinyins
-                for m in [pinyinRE.match(p)]
-                if m
-                for s in [m.group(1)]
-            ]
-            if not prompter.check(
-                False,
-                sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
-                '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
-            ) or not prompter.check(
-                False,
-                all(s in syllables for s in sylls),
-                '\033[1;31minvalid syllable%s: %s',
-                's' if sum(s not in syllables for s in sylls) > 1 else '',
-                ' '.join(s for s in sylls if s not in syllables),
-            ):
-                print('\033[A', end='')
-            elif prompter.check(
-                True,
-                check(char, pinyins),
-                '%s\v %s', lookuptext(char, pinyins), correction(char)
-            ):
-                q.good(easy)
-                if goods:
+                pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
+                sylls = [
+                    s
+                    for p in pinyins
+                    for m in [pinyinRE.match(p)]
+                    if m
+                    for s in [m.group(1)]
+                ]
+                if not prompter.check(
+                    False,
+                    sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
+                    '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
+                ) or not prompter.check(
+                    False,
+                    all(s in syllables for s in sylls),
+                    '\033[1;31minvalid syllable%s: %s',
+                    's' if sum(s not in syllables for s in sylls) > 1 else '',
+                    ' '.join(s for s in sylls if s not in syllables),
+                ):
                     print('\033[A', end='')
-                goods += char
-                score = q.scores.get(char, 0)
-                print('\033[A\033[1;32m%s\033[0;32m%s\033[0m\033[J' % (goods, scorerepr(score)))
-            else:
-                q.bad(easy)
-                goods = ''
-                score = q.scores.get(char, 0)
-                print('\033[A\033[5C\033[%s31;9m%s\033[0m %s \033[1;30m%s\033[0m\033[K'
-                    % (color, text, lookuptext(char, pinyins), scorerepr(score)))
+                elif prompter.check(
+                    True,
+                    check(char, pinyins),
+                    '%s\v %s', lookuptext(char, pinyins), correction(char)
+                ):
+                    q.good(easy)
+                    if goods:
+                        print('\033[A', end='')
+                    goods += char
+                    score = q.scores.get(char, 0)
+                    sr = scorerepr(score)
+                    goodslen = 2*len(goods) + len(sr)
+                    lines = 1 + (goodslen - 1)//termwidth()
+                    print('\033[%dA\033[1;32m%s\033[0;32m%s\033[0m\033[J' % (lines, goods, sr))
+                else:
+                    q.bad(easy)
+                    goods = ''
+                    score = q.scores.get(char, 0)
+                    print('\033[A\033[5C\033[%s31;9m%s\033[0m %s \033[1;30m%s\033[0m\033[K'
+                        % (color, text, lookuptext(char, pinyins), scorerepr(score)))
 
-        print('Completed %d rounds. 🎉' % (tests,))
-        print(q.report())
+            print('Completed %d rounds. 🎉' % (tests,))
+            print(q.report())
+            if fscores:
+                print('I:', focusreport(fscores))
+                fscores = [scores.get(c, 0) for c in focuschars]
+                print('O:', focusreport(fscores))
 
 if __name__ == '__main__':
     main()
