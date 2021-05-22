@@ -78,7 +78,13 @@ class Prompter:
             % (termwidth() - 4, togo, color, word, scorerepr(score)))
         return self.text, color
 
+    def checknowait(self, final, ok, fmt=None, *args):
+        return self._check(final, ok, True, fmt, *args)
+
     def check(self, final, ok, fmt=None, *args):
+        return self._check(final, ok, False, fmt, *args)
+
+    def _check(self, final, ok, neverwait, fmt=None, *args):
         if fmt is None:
             fmt = ''
         outcome = (
@@ -86,7 +92,7 @@ class Prompter:
             '\033[%dD✅\033[K' % (len(self.text),) if final else
             '')
         format = '%s %s' if '\v' in fmt else '%s\v %s'
-        self.message(format % (outcome, '' if ok else fmt % args), wait=not ok)
+        self.message(format % (outcome, '' if ok else fmt % args), wait=not ok and not neverwait)
         return ok
 
     def message(self, m, wait):
@@ -254,34 +260,35 @@ class SRSQueue:
         return self.queue[0]
 
     # good > 0, skip < 0
-    def score(self):
-        return self.scores.get(self.head(), 0)
+    def score(self, char):
+        return self.scores.get(char, 0)
 
     # Bump back a little with slow exponential growth.
-    def good(self, easy):
-        self.bump(max(self.score(), 2)*3//2)
+    def good(self, char, easy):
+        self.bump(char, max(self.score(char), 2)*3//2)
         self.goods[easy] += 1
 
-    # Bump forward all the way to head with rapid exponential approach.
-    def bad(self, easy):
-        self.bump(max(self.score()//8, 1), 5)
+    # Bump forward all the way to head with slow exponential approach.
+    def bad(self, char, easy, attempt):
+        # Multiply score by 2/(3*sqrt(attempt)).
+        penalty = int(10 * attempt**0.5)
+        self.bump(char, max(self.score(char)*20//3//penalty, 1))
         self.bads[easy] += 1
 
-    # Same outcome as skip, but records as a skip instead of a bad.
-    def skip(self):
-        self.bump(max(self.score()//8, 1))
+    # Bump forward all the way to head with rapid exponential approach.
+    def skip(self, char):
+        self.bump(char, max(self.score(char)//8, 1))
         self.skips += 1
 
-    def bump(self, score, maxpos=math.inf):
+    def bump(self, char, score, maxpos=math.inf):
         score = self.clamp(score)
-        head = self.head()
-        self.chars.add(head)
-        self.scores[head] = score
+        self.chars.add(char)
+        self.scores[char] = score
         p = min(abs(score), maxpos)
         i = random.randint(p, self.clamp(p*3//2))
         if i:
-            w = self.queue.pop(0)
-            self.queue.insert(i, w)
+            self.queue.remove(char)
+            self.queue.insert(i, char)
 
 def focusqueue(queue, chars):
     queuechars = set(queue)
@@ -312,27 +319,24 @@ def main():
     pinyinRE = re.compile(r'([a-zü]+)(\d+)')
 
     (syllables, forward, reverse) = load_data()
-    # print(forward)
-    # print(reverse)
-    # db = scoredb()
 
     fscores = None
     with queuedata(set(reverse)) as data:
         scores = data['scores']
 
-        if sys.argv[1:2] == ['--focus']:
+        focus = sys.argv[1:2] == ['--focus']
+        if focus:
             data['queue'], focuschars = focusqueue(data['queue'], set(sys.argv[2]))
-            fscores = [scores.get(c, 0) for c in focuschars]
+        else:
+            focuschars = data['queue']
+        fscores = [scores.get(c, 0) for c in focuschars]
 
         def check(c, pinyins):
             rev = {}
             for p in pinyins:
                 (word, tones) = pinyinRE.match(p).groups()
                 default(rev, set)[word].update(int(t) for t in tones)
-            # print(rev)
-            # print(reverse[c])
             return rev == reverse[c]
-                        # c in forward.get((word, tone), '')
 
         def correction(phrase):
             return ' '.join(
@@ -363,12 +367,15 @@ def main():
             prevChar = None
             rounds = 100
             while True:
-                togo = q.queue.index(None) if fscores else rounds - tests
+                togo = q.queue.index(None) if focus else rounds - tests
                 if togo <= 0:
                     break
                 char = q.head()
                 done = False
+                attempt = 0
+                failed = False
                 while True:
+                    attempt += 1
                     score = q.scores.get(char, 0)
                     # Print new characters in bold.
                     try:
@@ -376,71 +383,71 @@ def main():
                     except EOFError:
                         done = True
                         break
-                    if text:
+
+                    skipped = not text
+                    if skipped:
+                        prompter.check(False, False, '\v%s %s' % (
+                            correction(char),
+                            lookup('!', reverse[char].items()),
+                        ))
+                        goods = ''
+                        q.skip(char)
+                        prevChar = char
+                        continue
+
+                    easy = prevChar == char
+                    if not easy:
+                        prevChar = char
+                        tests += 1
+
+                    pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
+                    sylls = [
+                        s
+                        for p in pinyins
+                        for m in [pinyinRE.match(p)]
+                        if m
+                        for s in [m.group(1)]
+                    ]
+                    if not prompter.check(
+                        False,
+                        sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
+                        '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
+                    ) or not prompter.check(
+                        False,
+                        all(s in syllables for s in sylls),
+                        '\033[1;31minvalid syllable%s: %s',
+                        's' if sum(s not in syllables for s in sylls) > 1 else '',
+                        ' '.join(s for s in sylls if s not in syllables),
+                    ):
+                        print('\033[A', end='')
+                    elif prompter.checknowait(True, check(char, pinyins), ''):
+                        q.good(char, easy)
+                        if goods:
+                            print('\033[A', end='')
+                        goods += char
+                        score = q.scores.get(char, 0)
+                        sr = scorerepr(score)
+                        goodslen = 2*len(goods) + len(sr)
+                        lines = 1 + (goodslen - 1)//termwidth()
+                        print('\033[%dA\033[1;32m%s\033[0;32m%s\033[0m\033[J' % (lines, goods, sr))
                         break
-                    prompter.check(False, False, '\v%s %s' % (
-                        correction(char),
-                        lookup('!', reverse[char].items()),
-                    ))
-                    goods = ''
-                    q.skip()
-                    prevChar = char
+                    else:
+                        failed = True
+                        q.bad(char, easy, attempt)
+                        goods = ''
+                        score = q.scores.get(char, 0)
+                        print('\033[A\033[5C\033[%s31;9m%s\033[0m %s \033[1;30m%s\033[0m\033[K'
+                            % (color, text, lookuptext(char, pinyins), scorerepr(score)))
                 if done:
                     print()
                     break
 
-                easy = prevChar == char
-                if not easy:
-                    prevChar = char
-                    tests += 1
-
-                pinyins = [''.join(p).replace('v', 'ü') for p in pinyinRE.findall(text)]
-                sylls = [
-                    s
-                    for p in pinyins
-                    for m in [pinyinRE.match(p)]
-                    if m
-                    for s in [m.group(1)]
-                ]
-                if not prompter.check(
-                    False,
-                    sum(len(w) for w in pinyins) == len(wsRE.sub('', text)),
-                    '\033[1;31munrecognised elements:\033[0m %s', re.sub('\s+', ' ', pinyinRE.sub(' ', text).strip()),
-                ) or not prompter.check(
-                    False,
-                    all(s in syllables for s in sylls),
-                    '\033[1;31minvalid syllable%s: %s',
-                    's' if sum(s not in syllables for s in sylls) > 1 else '',
-                    ' '.join(s for s in sylls if s not in syllables),
-                ):
-                    print('\033[A', end='')
-                elif prompter.check(
-                    True,
-                    check(char, pinyins),
-                    '%s\v %s', lookuptext(char, pinyins), correction(char)
-                ):
-                    q.good(easy)
-                    if goods:
-                        print('\033[A', end='')
-                    goods += char
-                    score = q.scores.get(char, 0)
-                    sr = scorerepr(score)
-                    goodslen = 2*len(goods) + len(sr)
-                    lines = 1 + (goodslen - 1)//termwidth()
-                    print('\033[%dA\033[1;32m%s\033[0;32m%s\033[0m\033[J' % (lines, goods, sr))
-                else:
-                    q.bad(easy)
-                    goods = ''
-                    score = q.scores.get(char, 0)
-                    print('\033[A\033[5C\033[%s31;9m%s\033[0m %s \033[1;30m%s\033[0m\033[K'
-                        % (color, text, lookuptext(char, pinyins), scorerepr(score)))
-
             print('Completed %d rounds. 🎉' % (tests,))
             print(q.report())
-            if fscores:
-                print('I:', focusreport(fscores))
-                fscores = [scores.get(c, 0) for c in focuschars]
-                print('O:', focusreport(fscores))
+
+            print('I:', focusreport(fscores))
+            fscores = [scores.get(c, 0) for c in focuschars]
+            print('O:', focusreport(fscores))
 
 if __name__ == '__main__':
     main()
