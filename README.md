@@ -50,6 +50,8 @@ jump after a correct answer (a poor approximation of
 
 # TODO
 
-- Compound words
+- Offer to save progress after pressing Ctrl-C.
+- Test compound words.
 - Test knowledge of definitions (currently only shows definitions after a
   correct response).
+- Switch queue and score persistence from pickling to sqlite.
