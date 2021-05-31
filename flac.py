@@ -9,8 +9,31 @@ import re
 import shutil
 import sys
 
+flacdata_file = 'flac.data'
+cedict_file = 'cedict_1_0_ts_utf-8_mdbg.txt'
+definitions_file = 'definitions.txt'
+queuepickle_file = 'queue.pickle'
+
+wsRE = re.compile(r'[\s/]+')
+pinyinRE = re.compile(r'(?i)([a-zü]+)(\d+)')
+pinyinsRE = re.compile(r'(?i)(?:(?:[\u3000-\u9FFF]+|)?\b([\u3000-\u9FFF]+))?\[((?:[a-zü]+\d+\s+)*[a-zü]+\d+)\]')
+tradcharRE = re.compile(r'(?:[\u3000-\u9FFF]+\|)(?=[\u3000-\u9FFF]+)')
+ansiRE = re.compile(r'(?i)(?:\033\[[\d;]*[a-z])+')
+hanziRE = re.compile(r'[\u3000-\u9FFF]')
+
 def termwidth():
     return shutil.get_terminal_size().columns
+
+def phrasewidth(phrase):
+    phrase2 = ansiRE.sub('', phrase)
+    phrase3 = hanziRE.sub('xx', phrase2)
+    # if len(phrase3) == 151:
+    #     print(len(phrase), repr(phrase))
+    #     print(len(phrase2), repr(phrase2))
+    #     print(len(phrase3), repr(phrase3))
+    #     sys.exit()
+
+    return len(phrase3)
 
 def dots(score):
     return math.log(max(1, score), 1.5)
@@ -45,7 +68,7 @@ class default:
 def load_data():
     entries = {
         pinyin: tones
-        for line in open('flac.data').readlines()
+        for line in open(flacdata_file).readlines()
         if line.rstrip() and 'ā' not in line
         for cols in [line.rstrip().split('\t')]
         for (pinyin, tones) in [(cols[0], cols[1:])]
@@ -63,9 +86,90 @@ def load_data():
     reverse = {}
     for (pinyin, tone), words in forward.items():
         for word in words:
-            default(default(reverse, lambda: {})[word], set)[pinyin].add(tone)
+            default(default(reverse, dict)[word], set)[pinyin].add(tone)
 
-    return (syllables, forward, reverse)
+    dictionary = {}
+    defRE = re.compile(r'(\S+) (\S+) \[([^\]]+)\] /(.*)/\n?$')
+
+    # Detect traditional-only variants.
+    tradOnlyVariantRE = re.compile(r'^((?:.) (.) \[(.*?)\] )/(?:old )?variant of (?:.\|)?\2\[\3\](?=/)')
+
+    # Detect old variants.
+    oldVariantRE = re.compile(r'()/(?:\((?:old|archaic)\) [^/]*|[^/]* \((?:old|archaic)\)|(?:old|archaic) variant of [^/]*)(?=/)')
+
+    # Detect other elidable content.
+    elidableVariantRE = re.compile(r'()/[^/]*(?:\(dialect\)|Taiwan pr\.)[^/]*(?=/)')
+
+    def elideVariant(line, variant, vname):
+        line2 = variant.sub(r'\1', line)
+        if line != line2:
+            # print('elided %s variant: %s' % (vname, line.strip()))
+            return line2, line2.endswith('] /\n')
+        return line, False
+
+    maxdef = (0, '', '')
+    for line in open(cedict_file).readlines() + open(definitions_file).readlines():
+        if line.startswith('#'):
+            continue
+
+        line, empty = elideVariant(line, tradOnlyVariantRE, 'trad')
+        if empty:
+            continue
+        line, empty = elideVariant(line, oldVariantRE, 'old')
+        if empty:
+            continue
+        line, empty = elideVariant(line, elidableVariantRE, 'elidable')
+        if empty:
+            continue
+
+        try:
+            [_, word, pinyins, defs] = defRE.match(line).groups()
+        except:
+            print(line.strip())
+            raise
+        # if (word, pinyins) == ('劫', 'jie2'):
+        #     print('JIE2:', line)
+        pinyins = pinyins.replace('u:', 'ü')
+        if len(word) == 1:
+            maxdef = max(maxdef, (len(defs), defs, word, pinyins))
+        default(default(dictionary, dict)[word], list)[pinyins].append(defs)
+
+    # print(maxdef[2], accents(maxdef[3]), maxdef[0], accentsInPhrase(maxdef[1]))
+
+    # print(''.join(k for k in dictionary.keys() if len(k) == 1))
+    extras = set(reverse.keys()) - set(dictionary.keys())
+    if extras:
+        print('extra chars found in flac.data vs dict.txt:', ''.join(extras))
+
+    totalDiscrepancies = 0
+    for c, pinyins in reverse.items():
+        if c in dictionary:
+            lhs = {
+                '%s%d' % (pinyin, tone)
+                for (pinyin, tones) in pinyins.items()
+                for tone in tones
+            }
+            rhs = {
+                pinyin.lower()
+                for pinyin in dictionary[c]
+            }
+            if lhs != rhs:
+                totalDiscrepancies += 1
+                if False: print(
+                    'discrepancy in %s (\033[1;32m%s\033[1;30m ← %s → \033[0m\033[1;31m%s\033[0m): %s'
+                    % (
+                        c,
+                        '/'.join(lhs - rhs) or '\033[1;30m∅\033[0m',
+                        '/'.join(lhs & rhs) or '∅',
+                        '/'.join(rhs - lhs) or '\033[1;30m∅\033[0m',
+                        dictionary[c],
+                    ))
+        else:
+            print('!!!', c)
+    if totalDiscrepancies > 0:
+        print('total discrepancies:', totalDiscrepancies)
+
+    return (syllables, forward, reverse, dictionary)
 
 class Prompter:
     def ask(self, word, score, togo):
@@ -74,8 +178,8 @@ class Prompter:
         self.word = word
         # print('' % (), end='')
         self.text = input(
-            '\n\033[A\033[K\033[%dG%d\033[G\033[%sm%s\033[1;30m%-2s\033[0m — '
-            % (termwidth() - 4, togo, color, word, scorerepr(score)))
+            '\n\033[A\033[K\033[%dG%5d\033[G\033[%sm%s\033[1;30m%-2s\033[0m — '
+            % (termwidth() - 5, togo, color, word, scorerepr(score)))
         return self.text, color
 
     def checknowait(self, final, ok, fmt=None, *args):
@@ -125,6 +229,7 @@ vowels = {
 }
 
 def accent(pinyin, tone):
+    tone = int(tone)
     chars = list(pinyin)
     v = sum(c in vowels for c in chars)
     # https://en.wikipedia.org/wiki/Pinyin#Rules_for_placing_the_tone_mark
@@ -151,9 +256,18 @@ def accent(pinyin, tone):
                 break
     return pinyinColor(''.join(chars), tone)
 
+def accents(pinyins):
+    return pinyinRE.sub(lambda m: accent(*m.groups()), pinyins)
+
+def accentsInPhrase(phrase):
+    phrase = tradcharRE.sub('', phrase)
+    return pinyinsRE.sub(
+        lambda m: '\033[1m%s[\033[0m%s\033[1m]\033[0m' % (m.group(1) or '', accents(m.group(2)),),
+        phrase)
+
 def pinyinTones(pinyin, tones):
     return '/'.join(accent(pinyin, t) for t in sorted(tones))
-
+    
 # class scoredb:
 #     def __init__(self):
 #         self.db = sqlite3.connect('flac.db')
@@ -189,7 +303,7 @@ def autopickle(filename, default):
 # queuedata loads queue data from the pickle
 @contextlib.contextmanager
 def queuedata(words):
-    with autopickle('queue.pickle', {'queue': [], 'scores': {}}) as data:
+    with autopickle(queuepickle_file, {'queue': [], 'scores': {}}) as data:
         queue = [w for w in data['queue'] if w in words]
         new = list(words - set(queue))
         if new:
@@ -315,10 +429,7 @@ def focusreport(fscores):
     return '  '.join('%4.1f' % (dots(fscores[p]),) for p in percentiles)
 
 def main():
-    wsRE = re.compile(r'[\s/]+')
-    pinyinRE = re.compile(r'([a-zü]+)(\d+)')
-
-    (syllables, forward, reverse) = load_data()
+    (syllables, forward, reverse, dictionary) = load_data()
 
     fscores = None
     with queuedata(set(reverse)) as data:
@@ -366,6 +477,21 @@ def main():
             tests = 0
             prevChar = None
             rounds = 100
+            report = ''
+            reportlines = 1
+
+            def cleargoods():
+                nonlocal goods, report, reportlines
+                if goods:
+                    report = '\033[A%s\033[1;32m%s\033[0;32m%s\033[0m\033[%dB' % (
+                        ''.join(['\033[A\033[K']*reportlines),
+                        goods,
+                        scorerepr(q.scores.get(goods[-1], 0)),
+                        reportlines)
+                    reportlines = 1
+                    print(report)
+                    goods = ''
+
             while True:
                 togo = q.queue.index(None) if focus else rounds - tests
                 if togo <= 0:
@@ -376,10 +502,9 @@ def main():
                 failed = False
                 while True:
                     attempt += 1
-                    score = q.scores.get(char, 0)
                     # Print new characters in bold.
                     try:
-                        text, color = prompter.ask(char, score, togo)
+                        text, color = prompter.ask(char, q.scores.get(char, 0), togo)
                     except EOFError:
                         done = True
                         break
@@ -390,7 +515,7 @@ def main():
                             correction(char),
                             lookup('!', reverse[char].items()),
                         ))
-                        goods = ''
+                        cleargoods()
                         q.skip(char)
                         prevChar = char
                         continue
@@ -425,19 +550,25 @@ def main():
                         if goods:
                             print('\033[A', end='')
                         goods += char
-                        score = q.scores.get(char, 0)
-                        sr = scorerepr(score)
-                        goodslen = 2*len(goods) + len(sr)
-                        lines = 1 + (goodslen - 1)//termwidth()
-                        print('\033[%dA\033[1;32m%s\033[0;32m%s\033[0m\033[J' % (lines, goods, sr))
+                        defs = '; '.join(
+                            '%s %s' % (accented, ' | '.join(accentsInPhrase(d) for d in defs))
+                            for (pinyins, defs) in sorted(dictionary.get(char, {}).items(), key=lambda p: (p[0].lower(), p))
+                            for accented in [' '.join(accent(*pinyinRE.match(p).groups()) for p in pinyins.split())]
+                        )
+                        report = '\033[%dA\033[1;32m%s\033[0;32m%s\033[0m %s\033[J' % (
+                            reportlines,
+                            goods,
+                            scorerepr(q.scores.get(char, 0)),
+                            defs)
+                        reportlines = 1 + (phrasewidth(report) - 1)//termwidth()
+                        print(report)
                         break
                     else:
                         failed = True
                         q.bad(char, easy, attempt)
-                        goods = ''
-                        score = q.scores.get(char, 0)
+                        cleargoods()
                         print('\033[A\033[5C\033[%s31;9m%s\033[0m %s \033[1;30m%s\033[0m\033[K'
-                            % (color, text, lookuptext(char, pinyins), scorerepr(score)))
+                            % (color, text, lookuptext(char, pinyins), scorerepr(q.scores.get(char, 0))))
                 if done:
                     print()
                     break
