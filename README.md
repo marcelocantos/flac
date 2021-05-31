@@ -8,6 +8,8 @@ Clone this repo.
 
 # Run
 
+Install Python 3, then…
+
 ```bash
 ./flac.py
 ```
