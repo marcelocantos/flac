@@ -33,10 +33,7 @@ var (
 )
 
 func loadCEDict(cache pinyin.Cache, fs afero.Fs, paths ...string) (*cedict.Dict, error) {
-	result := &cedict.Dict{
-		Simplified: map[string]*cedict.Entries{},
-		Syllables:  map[string]bool{},
-	}
+	var result *cedict.Dict
 
 	for _, path := range paths {
 		target := &cedict.Dict{
@@ -127,17 +124,22 @@ func loadCEDict(cache pinyin.Cache, fs afero.Fs, paths ...string) (*cedict.Dict,
 		}
 
 		// Merge target into result.
+		if result == nil {
+			result = target
+			continue
+		}
+
 		for word, entries := range target.Simplified {
 			resultEntries, has := result.Simplified[word]
 			if !has {
-				resultEntries = &cedict.Entries{Entries: map[string]*cedict.Entry{}}
-				result.Simplified[word] = resultEntries
+				result.Simplified[word] = entries
+				continue
 			}
 			for pinyin, entry := range entries.Entries {
 				resultEntry, has := resultEntries.Entries[pinyin]
 				if !has {
-					resultEntry = &cedict.Entry{}
-					resultEntries.Entries[pinyin] = resultEntry
+					resultEntries.Entries[pinyin] = entry
+					continue
 				}
 				resultEntry.Entry = append(resultEntry.Entry, entry.Entry...)
 			}
