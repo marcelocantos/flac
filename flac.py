@@ -9,9 +9,9 @@ import re
 import shutil
 import sys
 
-flacdata_file = 'flac.data'
-cedict_file = 'cedict_1_0_ts_utf-8_mdbg.txt'
-definitions_file = 'definitions.txt'
+flacdata_file = 'refdata/flac.data'
+cedict_file = 'refdata/cedict_1_0_ts_utf-8_mdbg.txt'
+addenda_file = 'refdata/addenda.txt'
 queuepickle_file = 'queue.pickle'
 
 wsRE = re.compile(r'[\s/]+')
@@ -108,7 +108,7 @@ def load_data():
         return line, False
 
     maxdef = (0, '', '')
-    for line in open(cedict_file).readlines() + open(definitions_file).readlines():
+    for line in open(cedict_file).readlines() + open(addenda_file).readlines():
         if line.startswith('#'):
             continue
 
