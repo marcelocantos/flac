@@ -29,18 +29,25 @@ var (
 )
 
 type CEDict struct {
-	simplified map[string]*CeDictEntry
+	simplified map[string]CEDictEntries
 	syllables  map[string]bool
 }
 
-type CeDictEntry struct {
-	Pinyin      []pinyin.Pinyin
-	Definitions []string
+func (d *CEDict) Simplified() map[string]CEDictEntries {
+	return d.simplified
 }
 
-func loadCeDict(fs afero.Fs, paths ...string) (*CEDict, error) {
+func (d *CEDict) Syllables() map[string]bool {
+	return d.syllables
+}
+
+type CEDictEntries map[string]*CEDictEntry
+
+type CEDictEntry []string
+
+func loadCEDict(fs afero.Fs, paths ...string) (*CEDict, error) {
 	cedict := CEDict{
-		simplified: map[string]*CeDictEntry{},
+		simplified: map[string]CEDictEntries{},
 		syllables:  map[string]bool{},
 	}
 
@@ -96,21 +103,30 @@ func loadCeDict(fs afero.Fs, paths ...string) (*CEDict, error) {
 				parts := strings.Split(m[3], " ")
 				defs := m[4]
 
-				pinyins := make([]pinyin.Pinyin, 0, len(parts))
 				for _, p := range parts {
-					pinyin, syllable, err := pinyin.NewPinyin(p)
+					pinyin, err := pinyin.NewPinyin(p)
 					if err != nil {
 						continue scanning
 					}
-					pinyins = append(pinyins, pinyin)
-					cedict.syllables[syllable] = true
+					cedict.syllables[pinyin.Syllable()] = true
 				}
-				entry, has := cedict.simplified[simplified]
+
+				entries, has := cedict.simplified[simplified]
 				if !has {
-					entry = &CeDictEntry{Pinyin: pinyins}
-					cedict.simplified[simplified] = entry
+					entries = CEDictEntries{}
+					cedict.simplified[simplified] = entries
 				}
-				entry.Definitions = append(entry.Definitions, strings.Split(defs, "/")...)
+
+				answer := m[3]
+				answer = strings.ReplaceAll(answer, " ", "")
+				answer = strings.ReplaceAll(answer, "u:", "v")
+				entry, has := entries[answer]
+				if !has {
+					entry = &CEDictEntry{}
+					entries[answer] = entry
+				}
+
+				*entry = append(*entry, strings.Split(defs, "/")...)
 			}
 		}
 	}

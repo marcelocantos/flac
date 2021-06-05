@@ -22,7 +22,7 @@ func New(fs afero.Fs) (*Refdata, error) {
 		return nil, err
 	}
 
-	cedict, err := loadCeDict(fs, cedictFilename)
+	cedict, err := loadCEDict(fs, cedictFilename)
 	if err != nil {
 		return nil, err
 	}

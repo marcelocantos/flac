@@ -22,7 +22,7 @@ var (
 		1: "[red::b]",
 		2: "[green::b]",
 		3: "[blue::b]",
-		4: "[magenta::b]",
+		4: "[purple::b]",
 		5: "[black::b]",
 	}
 
@@ -34,32 +34,34 @@ var (
 		'u': []rune(" ūúǔùu"),
 		'ü': []rune(" ǖǘǚǜü"),
 	}
-
-	vowelTones = func() map[rune]Tone {
-		result := make(map[rune]Tone, 6*5)
-		for _, runes := range vowels {
-			for i, r := range runes[1:] {
-				result[r] = Tone(1 + i)
-			}
-		}
-		return result
-	}()
 )
 
-type Pinyin string
+type Pinyin struct {
+	pinyin   string
+	syllable string
+	tone     Tone
+}
 
-func NewPinyin(pinyin string) (_ Pinyin, syllable string, _ error) {
-	if pinyin == "," {
-		return Pinyin(", "), "", nil
+func MustNewPinyin(raw string) Pinyin {
+	p, err := NewPinyin(raw)
+	if err != nil {
+		panic(err)
 	}
-	if pinyin == "·" {
-		return Pinyin(" · "), "", nil
+	return p
+}
+
+func NewPinyin(raw string) (Pinyin, error) {
+	if raw == "," {
+		return Pinyin{pinyin: ", "}, nil
 	}
-	groups := pinyinRE.FindStringSubmatch(pinyin)
+	if raw == "·" {
+		return Pinyin{pinyin: " · "}, nil
+	}
+	groups := pinyinRE.FindStringSubmatch(raw)
 	if groups == nil {
-		return "", "", fmt.Errorf("%q not a valid pinyin form", pinyin)
+		return Pinyin{}, fmt.Errorf("%q not a valid pinyin form", raw)
 	}
-	syllable = groups[1]
+	syllable := groups[1]
 	tone, err := strconv.Atoi(groups[2])
 	if err != nil {
 		panic(err)
@@ -108,16 +110,23 @@ func NewPinyin(pinyin string) (_ Pinyin, syllable string, _ error) {
 			}
 		}
 	}
-	return Pinyin(string(chars)), strings.Replace(syllable, "ü", "v", 1), nil
+	return Pinyin{
+		pinyin:   string(chars),
+		syllable: strings.Replace(syllable, "ü", "v", 1),
+		tone:     Tone(tone),
+	}, nil
+}
+
+func (p Pinyin) String() string {
+	return p.pinyin
+}
+
+func (p Pinyin) Syllable() string {
+	return p.syllable
 }
 
 func (p Pinyin) Tone() Tone {
-	for _, r := range p {
-		if tone, has := vowelTones[r]; has {
-			return Tone(tone)
-		}
-	}
-	return 0
+	return p.tone
 }
 
 func (p Pinyin) Color() string {
