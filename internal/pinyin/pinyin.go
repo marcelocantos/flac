@@ -42,15 +42,7 @@ type Pinyin struct {
 	tone     Tone
 }
 
-func MustNewPinyin(raw string) Pinyin {
-	p, err := NewPinyin(raw)
-	if err != nil {
-		panic(err)
-	}
-	return p
-}
-
-func NewPinyin(raw string) (Pinyin, error) {
+func newPinyin(raw string) (Pinyin, error) {
 	if raw == "," {
 		return Pinyin{pinyin: ", "}, nil
 	}

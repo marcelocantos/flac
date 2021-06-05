@@ -13,7 +13,9 @@ import (
 )
 
 func main2() error {
+	cache := pinyin.Cache{}
 	refdata, err := refdata.New(
+		cache,
 		afero.NewBasePathFs(afero.NewOsFs(), "refdata"))
 	if err != nil {
 		return err
@@ -33,15 +35,16 @@ func main2() error {
 		return err
 	}
 	root.Input.
-		SetValidSyllables(refdata.CEDict().Syllables()).
+		SetValidSyllables(refdata.CEDict().Syllables).
 		SetSubmit(func(answer string) {
-			if refdata.CEDict().Simplified()[headWord][answer] != nil {
+			root.Input.SetText("")
+			entries := refdata.CEDict().Simplified[headWord].GetEntries()
+			if entries != nil && entries[answer] != nil {
 				fmt.Fprintf(root.Results, "[green::b]YES![-::-] %s = %s\n",
-					headWord, pinyin.MustNewPinyin(answer).ColorString())
+					headWord, cache.MustPinyin(answer).ColorString())
 			} else {
 				fmt.Fprintf(root.Results, "[red::b]NO!\n")
 			}
-			root.Input.SetText("")
 		}).
 		SetLabel(headWord + ":")
 

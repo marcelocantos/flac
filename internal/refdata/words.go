@@ -11,6 +11,8 @@ func loadWords(fs afero.Fs, path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer wordsFile.Close()
+
 	scanner := bufio.NewScanner(wordsFile)
 	var words []string
 	for scanner.Scan() {

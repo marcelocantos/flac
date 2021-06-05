@@ -10,4 +10,5 @@ require (
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18
 	github.com/spf13/afero v1.6.0
 	github.com/stretchr/testify v1.7.0
+	google.golang.org/protobuf v1.26.0
 )

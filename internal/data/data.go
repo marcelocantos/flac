@@ -71,6 +71,10 @@ func NewDatabase(path string) (*Database, error) {
 	return &d, nil
 }
 
+func (d *Database) Close() {
+	d.db.Close()
+}
+
 func (d *Database) Populate(words []string) error {
 	elideRE := regexp.MustCompile(`\P{Han}`)
 
