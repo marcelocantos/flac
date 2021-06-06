@@ -51,6 +51,12 @@ flac : $(FLAC_SRCS)
 precache : $(GO_SRCS)
 	go build ./internal/cmd/precache
 
+# test
+
+.PHONY : test
+test :
+	go test ./...
+
 # clean
 
 .PHONY : clean

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-errors/errors"
 	"github.com/pierrec/lz4"
 	"github.com/spf13/afero"
 	"google.golang.org/protobuf/proto"
@@ -143,13 +144,13 @@ scanning:
 	for scanner.Scan() {
 		lineno++
 		if line := scanner.Text(); line != "" && !strings.HasPrefix(line, "#") {
-			lineError := func(msg string) error {
-				return fmt.Errorf("%s: %d: %s", msg, lineno, line)
+			lineError := func(err error) error {
+				return errors.WrapPrefix(err, fmt.Sprintf("%d: %s", lineno, line), 0)
 			}
 
 			match := cedictDefRE.FindStringSubmatch(line)
 			if len(match) != 5 {
-				return lineError("no match")
+				return lineError(errors.Errorf("no match"))
 			}
 			traditional := match[1]
 			simplified := match[2]
@@ -186,15 +187,14 @@ scanning:
 					line = line2
 				}
 			}
-			parts := strings.Split(match[3], " ")
+			word, err := pincache.NewWord(match[3])
+			if err != nil {
+				return lineError(err)
+			}
 			defs := match[4]
 
-			for _, p := range parts {
-				pinyin, err := pincache.Pinyin(p)
-				if err != nil {
-					continue scanning
-				}
-				cedict.Syllables[pinyin.Syllable()] = true
+			for _, p := range word {
+				cedict.Syllables[p.Syllable()] = true
 			}
 
 			cedict.TraditionalToSimplified[traditional] = simplified
@@ -208,9 +208,7 @@ scanning:
 			}
 			entries.Traditional = traditional
 
-			answer := match[3]
-			answer = strings.ReplaceAll(answer, " ", "")
-			answer = strings.ReplaceAll(answer, "u:", "v")
+			answer := word.RawString()
 			entry, has := entries.Definitions[answer]
 			if !has {
 				entry = &refdata.CEDict_Definitions{}

@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/marcelocantos/flac/internal/data"
 	"github.com/rivo/tview"
 )
@@ -14,8 +17,11 @@ type Root struct {
 
 func New(db *data.Database) *Root {
 	results := newResults(db)
+	results.ScrollToEnd()
+	fmt.Fprintf(results, "%s你好！", strings.Repeat("\n", 999))
 
 	input := newPinyinInput()
+
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(results, 0, 1, false).
 		AddItem(input, 1, 0, true)

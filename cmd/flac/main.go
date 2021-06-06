@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/go-errors/errors"
 	"github.com/rivo/tview"
 
 	"github.com/marcelocantos/flac/internal/data"
@@ -55,7 +57,7 @@ func main2() error {
 				panic("no entry for " + word)
 			}
 			if outcome := Assess(pincache, entries, answer); outcome.IsGood() {
-				fmt.Fprintf(root.Results, "[green::b]YES![-::-] %s = %s\n",
+				fmt.Fprintf(root.Results, "\n[green::b]YES![-::-] %s = %s",
 					word, outcome.pinyins.ColorString())
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
@@ -64,7 +66,7 @@ func main2() error {
 					panic(err)
 				}
 			} else {
-				fmt.Fprintf(root.Results, "[red::b]NO! %s\n", outcome.Correction())
+				fmt.Fprintf(root.Results, "\n[red::b]NO! %s", outcome.Correction())
 				root.Results.Bad(word, false, &attempt)
 			}
 		})
@@ -78,7 +80,18 @@ func main2() error {
 }
 
 func main() {
+	defer func() {
+		if err, is := recover().(*errors.Error); is {
+			fmt.Fprintln(os.Stderr, err.ErrorStack())
+			fmt.Println(err)
+			os.Exit(2)
+		}
+	}()
 	if err := main2(); err != nil {
-		panic(err)
+		if err, is := err.(*errors.Error); is {
+			fmt.Fprintln(os.Stderr, err.ErrorStack())
+		}
+		fmt.Println(err)
+		os.Exit(2)
 	}
 }

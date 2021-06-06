@@ -5,10 +5,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/go-errors/errors"
 )
 
 var (
-	pinyinRE = regexp.MustCompile(`(?i)^([a-zü:]+)(\d)$`)
+	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([,·])|([a-zü:]+)([1-5]+))\s*`)
 )
 
 type Tone int8
@@ -42,19 +44,14 @@ type Pinyin struct {
 	tone     Tone
 }
 
-func newPinyin(raw string) (Pinyin, error) {
-	if raw == "," {
-		return Pinyin{pinyin: ", "}, nil
-	}
-	if raw == "·" {
-		return Pinyin{pinyin: " · "}, nil
-	}
+func newPinyin(raw string) (_ Pinyin, residue string, _ error) {
 	groups := pinyinRE.FindStringSubmatch(raw)
-	if groups == nil {
-		return Pinyin{}, fmt.Errorf("%q not a valid pinyin form", raw)
+	if groups == nil ||
+		groups[1] == "" && len(groups[3]) != 1 {
+		return Pinyin{}, "", errors.Errorf("%q: invalid pinyin", raw)
 	}
-	syllable := groups[1]
-	tone, err := strconv.Atoi(groups[2])
+	syllable := groups[2]
+	tone, err := strconv.Atoi(groups[3])
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +103,20 @@ func newPinyin(raw string) (Pinyin, error) {
 		pinyin:   string(chars),
 		syllable: strings.Replace(syllable, "ü", "v", 1),
 		tone:     Tone(tone),
-	}, nil
+	}, raw[len(groups[0]):], nil
+}
+
+func (p Pinyin) Less(q Pinyin) bool {
+	aLower := strings.ToLower(p.syllable)
+	bLower := strings.ToLower(q.syllable)
+	if aLower != bLower {
+		return aLower < bLower
+	}
+	if p.syllable != q.syllable {
+		return p.syllable < q.syllable
+	}
+	return p.tone < q.tone
+
 }
 
 func (p Pinyin) String() string {

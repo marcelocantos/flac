@@ -6,12 +6,13 @@ import (
 	"path"
 	"strings"
 
+	"github.com/go-errors/errors"
 	"github.com/spf13/afero"
 )
 
 func main2() error {
 	if len(os.Args) != 5 || os.Args[1] != "-o" {
-		return fmt.Errorf("usage: %s -o dest words dict:dict:... ", path.Base(os.Args[0]))
+		return errors.Errorf("usage: %s -o dest words dict:dict:... ", path.Base(os.Args[0]))
 	}
 	dest := os.Args[2]
 	wordsPath := os.Args[3]
@@ -21,7 +22,18 @@ func main2() error {
 }
 
 func main() {
+	defer func() {
+		if err, is := recover().(*errors.Error); is {
+			fmt.Fprintln(os.Stderr, err.ErrorStack())
+			fmt.Println(err)
+			os.Exit(2)
+		}
+	}()
 	if err := main2(); err != nil {
-		panic(err)
+		if err, is := err.(*errors.Error); is {
+			fmt.Fprintln(os.Stderr, err.ErrorStack())
+		}
+		fmt.Println(err)
+		os.Exit(2)
 	}
 }

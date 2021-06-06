@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pkg/errors"
 )
 
 type Database struct {
@@ -188,7 +189,7 @@ func (d *Database) selectInt(stmt *sql.Stmt, format string, args ...interface{})
 	err := stmt.QueryRow(args...).Scan(&pos)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			err = ErrNotFound(fmt.Errorf(format, args...))
+			err = ErrNotFound(errors.Errorf(format, args...))
 		}
 		return 0, err
 	}
@@ -235,12 +236,22 @@ func (d *Database) UpdateScoreAndPos(word string, score, dest int) error {
 		return err
 	}
 	if dest >= 0 {
-		return d.MoveWord(tx, word, dest)
+		return d.moveWord(tx, word, dest)
 	}
 	return nil
 }
 
-func (d *Database) MoveWord(tx *sql.Tx, word string, dest int) error {
+func (d *Database) MoveWord(word string, dest int) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Commit()
+
+	return d.moveWord(tx, word, dest)
+}
+
+func (d *Database) moveWord(tx *sql.Tx, word string, dest int) error {
 	max, err := d.maxPos(tx)
 	if err != nil {
 		return err

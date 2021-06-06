@@ -9,7 +9,7 @@ import (
 
 var (
 	inputRE = regexp.MustCompile(
-		`^[a-zü]+([1-5]+(/[a-zü]+[1-5]+)*(/([a-zü]+[1-5]?)?)?)?$`)
+		`(?i)^[a-zü]+([1-5]+(/[a-zü]+[1-5]+)*(/([a-zü]+[1-5]?)?)?)?$`)
 )
 
 type PinyinInput struct {
@@ -70,7 +70,9 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
 func (pi *PinyinInput) done(key tcell.Key) {
 	switch key {
 	case tcell.KeyEnter:
-		pi.submit(pi.GetText())
+		if pi.GetText() != "" {
+			pi.submit(pi.GetText())
+		}
 	case tcell.KeyEscape:
 		pi.giveUp()
 	}
