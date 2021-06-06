@@ -1,8 +1,15 @@
 package ui
 
 import (
+	"regexp"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+)
+
+var (
+	inputRE = regexp.MustCompile(
+		`^[a-zü]+([1-5]+(/[a-zü]+[1-5]+)*(/([a-zü]+[1-5]?)?)?)?$`)
 )
 
 type PinyinInput struct {
@@ -51,11 +58,13 @@ func (pi *PinyinInput) SetGiveUp(giveUp func()) *PinyinInput {
 }
 
 func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
-	d := len(textToCheck) - 1
-	if '0' <= textToCheck[d] && textToCheck[d] <= '5' {
-		return pi.syllables[textToCheck[:d]]
-	}
-	return pi.prefixes[textToCheck]
+	return inputRE.Match([]byte(textToCheck))
+	// d := len(textToCheck) - 1
+	// if '0' <= textToCheck[d] && textToCheck[d] <= '5' {
+	// 	i := strings.IndexAny(textToCheck[:d], "12345")
+	// 	return pi.syllables[textToCheck[:i]]
+	// }
+	// return pi.prefixes[textToCheck]
 }
 
 func (pi *PinyinInput) done(key tcell.Key) {

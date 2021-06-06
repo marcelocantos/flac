@@ -43,8 +43,8 @@ func cacheRefData(
 ) error {
 	result := &refdata.RefData{
 		WordList: &refdata.WordList{
-			Frequencies: map[string]int32{},
-			Positions:   map[string]int32{},
+			Frequencies: map[string]int64{},
+			Positions:   map[string]int64{},
 		},
 		Dict: &refdata.CEDict{
 			Entries:                 map[string]*refdata.CEDict_Entries{},
@@ -57,7 +57,10 @@ func cacheRefData(
 		return err
 	}
 
-	wl := &words.WordList{WordList: result.WordList}
+	wl := words.WordList{WordList: result.WordList}
+	if len(wl.WordList.Words) == 0 {
+		panic("???")
+	}
 
 	for _, path := range dictPaths {
 		if err := loadCEDict(fs, path, wl, result.Dict); err != nil {
@@ -90,10 +93,17 @@ func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
 	if err != nil {
 		return err
 	}
+
+	// Skip BOM.
+	if []rune(string(words_data[:3]))[0] == 0xfeff {
+		words_data = words_data[3:]
+	}
+
 	wordsFile := bytes.NewBuffer(words_data)
 
 	scanner := bufio.NewScanner(wordsFile)
 	i := -1
+	added := 0
 	for scanner.Scan() {
 		i++
 		if line := scanner.Text(); line != "" {
@@ -104,10 +114,14 @@ func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
 				return err
 			}
 
+			added++
 			wl.Words = append(wl.Words, word)
-			wl.Frequencies[word] = int32(freq)
-			wl.Positions[word] = int32(i)
+			wl.Frequencies[word] = int64(freq)
+			wl.Positions[word] = int64(i)
 		}
+	}
+	if len(wl.Words) == 0 {
+		panic(added)
 	}
 	return scanner.Err()
 }
@@ -115,7 +129,7 @@ func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
 func loadCEDict(
 	fs afero.Fs,
 	path string,
-	wl *words.WordList,
+	wl words.WordList,
 	cedict *refdata.CEDict,
 ) error {
 	pincache := pinyin.Cache{}
@@ -139,7 +153,7 @@ scanning:
 			}
 			traditional := match[1]
 			simplified := match[2]
-			if wl.Has(simplified) {
+			if !wl.Has(simplified) {
 				continue
 			}
 

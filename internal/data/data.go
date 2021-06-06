@@ -9,13 +9,18 @@ import (
 )
 
 type Database struct {
-	db               *sql.DB
-	enqueueWord      *sql.Stmt
-	maxScoreStmt     *sql.Stmt
-	maxPosStmt       *sql.Stmt
-	wordScoreStmt    *sql.Stmt
-	wordPosStmt      *sql.Stmt
-	wordAtStmt       *sql.Stmt
+	db *sql.DB
+
+	// Read
+	maxScoreStmt  *sql.Stmt
+	maxPosStmt    *sql.Stmt
+	wordScoreStmt *sql.Stmt
+	wordPosStmt   *sql.Stmt
+	wordAtStmt    *sql.Stmt
+
+	// Write
+	enqueueWordStmt  *sql.Stmt
+	updateScoreStmt  *sql.Stmt
 	rotateWords1Stmt *sql.Stmt
 	rotateWords2Stmt *sql.Stmt
 }
@@ -45,12 +50,13 @@ func NewDatabase(path string) (*Database, error) {
 	}
 
 	for stmt, query := range map[**sql.Stmt]string{
-		&d.enqueueWord:   `INSERT INTO queue (pos, word) VALUES (?, ?)`,
-		&d.maxScoreStmt:  `SELECT COALESCE(MAX(score), -1) FROM word_score`,
-		&d.maxPosStmt:    `SELECT COALESCE(MAX(pos), -1) FROM queue`,
-		&d.wordScoreStmt: `SELECT score FROM word_score WHERE word = ?`,
-		&d.wordPosStmt:   `SELECT pos FROM queue WHERE word = ?`,
-		&d.wordAtStmt:    `SELECT word FROM queue WHERE pos = ?`,
+		&d.maxScoreStmt:    `SELECT COALESCE(MAX(score), -1) FROM word_score`,
+		&d.maxPosStmt:      `SELECT COALESCE(MAX(pos), -1) FROM queue`,
+		&d.wordScoreStmt:   `SELECT score FROM word_score WHERE word = ?`,
+		&d.wordPosStmt:     `SELECT pos FROM queue WHERE word = ?`,
+		&d.wordAtStmt:      `SELECT word FROM queue WHERE pos = ?`,
+		&d.enqueueWordStmt: `INSERT INTO queue (pos, word) VALUES (?, ?)`,
+		&d.updateScoreStmt: `INSERT OR REPLACE INTO word_score (word, score) VALUES (?, ?)`,
 		&d.rotateWords1Stmt: `
 			UPDATE queue
 			SET pos = -1-((pos - $first + $count + $offset) % $count + $first)
@@ -90,7 +96,7 @@ func (d *Database) Populate(words []string) error {
 	}
 
 	getWordPos := d.wordPos(tx)
-	enqueueWord := tx.Stmt(d.enqueueWord)
+	enqueueWord := tx.Stmt(d.enqueueWordStmt)
 	for _, word := range words {
 		if elideRE.MatchString(word) {
 			continue
@@ -218,18 +224,30 @@ func (d *Database) HeadWord() (string, error) {
 	return d.WordAt(0)
 }
 
-func (d *Database) MoveWord(word string, dest int) error {
+func (d *Database) UpdateScoreAndPos(word string, score, dest int) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Commit()
 
+	if _, err := tx.Stmt(d.updateScoreStmt).Exec(word, score); err != nil {
+		return err
+	}
+	if dest >= 0 {
+		return d.MoveWord(tx, word, dest)
+	}
+	return nil
+}
+
+func (d *Database) MoveWord(tx *sql.Tx, word string, dest int) error {
 	max, err := d.maxPos(tx)
 	if err != nil {
 		return err
 	}
-	if dest > max {
+	if dest < 0 {
+		dest = 0
+	} else if dest > max {
 		dest = max
 	}
 

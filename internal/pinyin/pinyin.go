@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	pinyinRE = regexp.MustCompile(`^([a-zü:]+)(\d)$`)
+	pinyinRE = regexp.MustCompile(`(?i)^([a-zü:]+)(\d)$`)
 )
 
 type Tone int8
@@ -126,5 +126,9 @@ func (p Pinyin) Color() string {
 }
 
 func (p Pinyin) ColorString() string {
-	return fmt.Sprintf("%s%s[::]", p.Color(), p)
+	return fmt.Sprintf("%s%s[-::-]", p.Color(), p)
+}
+
+func (p Pinyin) RawString() string {
+	return fmt.Sprintf("%s%d", p.syllable, p.tone)
 }

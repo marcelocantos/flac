@@ -9,8 +9,8 @@ message RefData {
 
 message WordList {
     repeated string words = 1;
-    map<string, int32> frequencies = 2;
-    map<string, int32> positions = 3;
+    map<string, int64> frequencies = 2;
+    map<string, int64> positions = 3;
 }
 
 message CEDict {

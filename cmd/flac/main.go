@@ -26,24 +26,48 @@ func main2() error {
 
 	db.Populate(rd.WordList().Words)
 
-	root := ui.New()
-	headWord, err := db.HeadWord()
-	if err != nil {
+	root := ui.New(db)
+	var word string
+	var attempt int
+
+	setup := func() error {
+		var err error
+		word, err = db.HeadWord()
+		if err != nil {
+			return err
+		}
+		root.Input.SetLabel(word + ":")
+		root.Input.SetText("")
+		attempt = 1
+		return nil
+	}
+
+	if err := setup(); err != nil {
 		return err
 	}
+
 	root.Input.
 		SetValidSyllables(rd.Dict.Syllables).
 		SetSubmit(func(answer string) {
 			root.Input.SetText("")
-			entries := rd.Dict.Entries[headWord].GetDefinitions()
-			if entries != nil && entries[answer] != nil {
-				fmt.Fprintf(root.Results, "[green::b]YES![-::-] %s = %s\n",
-					headWord, pincache.MustPinyin(answer).ColorString())
-			} else {
-				fmt.Fprintf(root.Results, "[red::b]NO!\n")
+			entries := rd.Dict.Entries[word]
+			if entries == nil {
+				panic("no entry for " + word)
 			}
-		}).
-		SetLabel(headWord + ":")
+			if outcome := Assess(pincache, entries, answer); outcome.IsGood() {
+				fmt.Fprintf(root.Results, "[green::b]YES![-::-] %s = %s\n",
+					word, outcome.pinyins.ColorString())
+				if err := root.Results.Good(word, false); err != nil {
+					panic(err)
+				}
+				if err := setup(); err != nil {
+					panic(err)
+				}
+			} else {
+				fmt.Fprintf(root.Results, "[red::b]NO! %s\n", outcome.Correction())
+				root.Results.Bad(word, false, &attempt)
+			}
+		})
 
 	app := tview.NewApplication().SetRoot(root, true).EnableMouse(true)
 	if err := app.Run(); err != nil {
