@@ -1,9 +1,13 @@
 package fcache
 
 import (
+	"errors"
 	"io"
+	"io/ioutil"
+	"log"
 	"time"
 
+	"github.com/pierrec/lz4"
 	"github.com/spf13/afero"
 	"google.golang.org/protobuf/proto"
 )
@@ -16,12 +20,23 @@ func modTime(fs afero.Fs, path string) (time.Time, error) {
 	return stat.ModTime(), nil
 }
 
+func logCacheTiming() func(mode, path string) {
+	// start := time.Now()
+	return func(mode, path string) {
+		// end := time.Now()
+		// log.Printf("Cache %s (%.2f ms): %s",
+		// 	mode,
+		// 	float64(end.Sub(start))/float64(time.Millisecond),
+		// 	path)
+	}
+}
+
 func Load(
 	fs afero.Fs,
 	path string,
 	createAndSave func(src io.Reader, cache io.Writer) error,
 	load func(cache io.Reader) error,
-) error {
+) (err error) {
 	mod, err := modTime(fs, path)
 	if err != nil {
 		return err
@@ -31,7 +46,7 @@ func Load(
 	cacheMod, _ := modTime(fs, cachePath)
 
 	if cacheMod.After(mod) {
-		// log.Printf("Cache HIT: %s", path)
+		defer logCacheTiming()("HIT", path)
 		cache, err := fs.Open(cachePath)
 		if err == nil {
 			defer cache.Close()
@@ -39,10 +54,10 @@ func Load(
 				return nil
 			}
 		}
-		// log.Print("Failed to load from cache, reverting to cache miss")
+		log.Print("Cache load failed, reverting to cache miss")
 	}
 
-	// log.Printf("Cache MISS: %s", path)
+	defer logCacheTiming()("MISS", path)
 	src, err := fs.Open(path)
 	if err != nil {
 		return err
@@ -51,8 +66,15 @@ func Load(
 
 	cache, err := fs.Create(cachePath)
 	if err != nil {
+		cache.Close()
+		fs.Remove(cachePath)
 		return err
 	}
+	defer func() {
+		if err != nil {
+			fs.Remove(cachePath)
+		}
+	}()
 	defer cache.Close()
 
 	return createAndSave(src, cache)
@@ -74,16 +96,21 @@ func Proto(
 			if err != nil {
 				return err
 			}
-			_, err = cache.Write(data)
+			w := lz4.NewWriter(cache)
+			defer w.Close()
+			_, err = w.Write(data)
 			if err != nil {
 				return err
 			}
 			return nil
 		},
 		func(cache io.Reader) error { // load
-			data, err := afero.ReadAll(cache)
+			data, err := ioutil.ReadAll(lz4.NewReader(cache))
 			if err != nil {
 				return err
+			}
+			if len(data) == 0 {
+				return errors.New("empty cache")
 			}
 			err = proto.Unmarshal(data, target)
 			return err

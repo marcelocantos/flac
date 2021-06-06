@@ -1,44 +1,41 @@
 package refdata
 
 import (
-	"github.com/marcelocantos/flac/internal/pinyin"
-	"github.com/marcelocantos/flac/internal/proto/cedict"
-	"github.com/spf13/afero"
+	"bytes"
+	_ "embed"
+	"io/ioutil"
+
+	"google.golang.org/protobuf/proto"
+
+	"github.com/marcelocantos/flac/internal/proto/refdata"
+	"github.com/marcelocantos/flac/internal/refdata/words"
+	"github.com/pierrec/lz4"
 )
 
-//go:generate curl https://www.plecoforums.com/download/global_wordfreq-release_utf-8-txt.2593/ | head -n 10000 | awk '//{print $1}' > words.txt
-const (
-	wordsFilename   = "words.txt"
-	cedictFilename  = "cedict_1_0_ts_utf-8_mdbg.txt"
-	addendaFilename = "addenda.txt"
+var (
+	//go:embed refdata.cache
+	refdata_proto_lz4 []byte
 )
 
-type Refdata struct {
-	words  []string
-	cedict *cedict.Dict
+type RefData struct {
+	*refdata.RefData
 }
 
-func New(cache pinyin.Cache, fs afero.Fs) (*Refdata, error) {
-	words, err := loadWords(fs, wordsFilename)
+func New() (RefData, error) {
+	refdata_proto, err := ioutil.ReadAll(
+		lz4.NewReader(bytes.NewBuffer(refdata_proto_lz4)))
 	if err != nil {
-		return nil, err
+		return RefData{}, err
 	}
 
-	cedict, err := loadCEDict(cache, fs, cedictFilename, addendaFilename)
-	if err != nil {
-		return nil, err
+	rd := RefData{RefData: &refdata.RefData{}}
+	if err := proto.Unmarshal(refdata_proto, rd); err != nil {
+		return RefData{}, err
 	}
 
-	return &Refdata{
-		words:  words,
-		cedict: cedict,
-	}, nil
+	return rd, nil
 }
 
-func (d *Refdata) Words() []string {
-	return d.words
-}
-
-func (d *Refdata) CEDict() *cedict.Dict {
-	return d.cedict
+func (rd RefData) WordList() words.WordList {
+	return words.WordList{WordList: rd.RefData.WordList}
 }
