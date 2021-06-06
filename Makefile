@@ -4,9 +4,9 @@ all : flac
 empty :=
 space := $(empty) $(empty)
 
-CEDICT_PB = internal/proto/refdata/refdata.pb.go
+REFDATA_PB = internal/proto/refdata/refdata.pb.go
 
-CEDICT_SRCS = \
+REFDATA_SRCS = \
 	refdata/cedict_1_0_ts_utf-8_mdbg.txt \
 	refdata/addenda.txt
 
@@ -14,19 +14,19 @@ REFDATA_CACHE = internal/refdata/refdata.cache
 
 WORDS = refdata/words.txt
 
-GEN_FILES = $(CEDICT_PB) $(REFDATA_CACHE) $(WORDS)
+GEN_FILES = $(REFDATA_CACHE) $(WORDS)
 
-GO_SRCS = $(CEDICT_PB) $(shell find . -name '*.go')
+GO_SRCS = $(REFDATA_PB) $(shell find . -name '*.go')
 
 FLAC_SRCS = $(GO_SRCS) $(GEN_FILES)
 
 # generate
 
 .PHONY : gen
-gen : $(GEN_FILES)
+gen : $(REFDATA_PB) $(GEN_FILES)
 
-$(REFDATA_CACHE) : precache $(WORDS) $(CEDICT_SRCS)
-	./precache -o $@ $(WORDS) $(subst $(space),:,$(CEDICT_SRCS))
+$(REFDATA_CACHE) : precache $(WORDS) $(REFDATA_SRCS)
+	./precache -o $@ $(WORDS) $(subst $(space),:,$(REFDATA_SRCS))
 
 GLOBAL_WORDFREQ_NAME = global_wordfreq-release_utf-8-txt.2593
 GLOBAL_WORDFREQ_URL = \
@@ -40,6 +40,9 @@ $(GLOBAL_WORDFREQ) :
 $(WORDS) : $(GLOBAL_WORDFREQ)
 	head -n 10000 $< | awk '//{print $1}' > $@ || rm -f $@
 
+%.pb.go : %.proto
+	protoc --go_out=. $<
+
 # binaries
 
 flac : $(FLAC_SRCS)
@@ -50,24 +53,20 @@ precache : $(GO_SRCS)
 
 # clean
 
+.PHONY : clean
+clean : clean-gen clean-bin
+
+.PHONY : deep-clean
+deep-clean : clean clean-pb
+
 .PHONY : clean-gen
 clean-gen :
 	rm -f $(GEN_FILES)
 
-%.pb.go : %.proto
-	protoc --go_out=. $<
+.PHONY : clean-bin
+clean-bin :
+	rm -f flac precache
 
-.PHONY : clean
-clean : clean-cache clean-gen
-
-.PHONY : clean-flac
-clean-flac :
-	rm -f flac
-
-.PHONY : clean-precache
-clean-precache :
-	rm -f precache
-
-.PHONY : clean-cache
-clean-cache :
-	rm -f refdata/*.cache
+.PHONY : clean-pb
+clean-pb :
+	rm -f $(REFDATA_PB)
