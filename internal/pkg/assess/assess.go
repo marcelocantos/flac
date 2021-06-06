@@ -1,4 +1,4 @@
-package main
+package assess
 
 import (
 	"regexp"
@@ -14,8 +14,12 @@ var (
 
 type Outcome struct {
 	good       bool
-	pinyins    pinyin.Alts
+	alts       pinyin.Alts
 	correction string
+}
+
+func (o *Outcome) Alts() pinyin.Alts {
+	return o.alts
 }
 
 func Assess(pincache pinyin.Cache, entries *refdata.CEDict_Entries, answer string) *Outcome {
@@ -31,7 +35,7 @@ func Assess(pincache pinyin.Cache, entries *refdata.CEDict_Entries, answer strin
 		alts = append(alts, a...)
 	}
 	sort.Sort(alts)
-	o.pinyins = alts
+	o.alts = alts
 
 	if o.good {
 		if len(alts) != len(entries.Definitions) {

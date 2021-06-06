@@ -16,7 +16,6 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
-	"github.com/marcelocantos/flac/internal/pkg/refdata/words"
 )
 
 var (
@@ -58,13 +57,12 @@ func cacheRefData(
 		return err
 	}
 
-	wl := words.WordList{WordList: result.WordList}
-	if len(wl.WordList.Words) == 0 {
+	if len(result.WordList.Words) == 0 {
 		panic("???")
 	}
 
 	for _, path := range dictPaths {
-		if err := loadCEDict(fs, path, wl, result.Dict); err != nil {
+		if err := loadCEDict(fs, path, result.WordList, result.Dict); err != nil {
 			return err
 		}
 	}
@@ -130,7 +128,7 @@ func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
 func loadCEDict(
 	fs afero.Fs,
 	path string,
-	wl words.WordList,
+	wl *refdata.WordList,
 	cedict *refdata.CEDict,
 ) error {
 	pincache := pinyin.Cache{}

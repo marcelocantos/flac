@@ -1,12 +1,10 @@
 package ui
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/rivo/tview"
 
 	"github.com/marcelocantos/flac/internal/pkg/data"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
 type Root struct {
@@ -16,10 +14,9 @@ type Root struct {
 	Input   *PinyinInput
 }
 
-func New(db *data.Database) *Root {
-	results := newResults(db)
+func New(db *data.Database, rd *refdata.RefData) *Root {
+	results := newResults(db, rd)
 	results.ScrollToEnd()
-	fmt.Fprintf(results, "%s你好！", strings.Repeat("\n", 999))
 
 	input := newPinyinInput()
 

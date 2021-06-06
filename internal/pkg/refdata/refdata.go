@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
-	"github.com/marcelocantos/flac/internal/pkg/refdata/words"
 )
 
 var (
@@ -17,25 +16,14 @@ var (
 	refdata_proto_lz4 []byte
 )
 
-type RefData struct {
-	*refdata.RefData
-}
-
-func New() (RefData, error) {
+func New() (*refdata.RefData, error) {
 	refdata_proto, err := ioutil.ReadAll(
 		lz4.NewReader(bytes.NewBuffer(refdata_proto_lz4)))
 	if err != nil {
-		return RefData{}, err
+		return nil, err
 	}
 
-	rd := RefData{RefData: &refdata.RefData{}}
-	if err := proto.Unmarshal(refdata_proto, rd); err != nil {
-		return RefData{}, err
-	}
-
-	return rd, nil
-}
-
-func (rd RefData) WordList() words.WordList {
-	return words.WordList{WordList: rd.RefData.WordList}
+	rd := &refdata.RefData{}
+	err = proto.Unmarshal(refdata_proto, rd)
+	return rd, err
 }

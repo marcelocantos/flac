@@ -7,6 +7,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/rivo/tview"
 
+	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/refdata"
@@ -26,9 +27,9 @@ func main2() error {
 		return err
 	}
 
-	db.Populate(rd.WordList().Words)
+	db.Populate(rd.WordList.Words)
 
-	root := ui.New(db)
+	root := ui.New(db, rd)
 	var word string
 	var attempt int
 
@@ -56,9 +57,7 @@ func main2() error {
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := Assess(pincache, entries, answer); outcome.IsGood() {
-				fmt.Fprintf(root.Results, "\n[green::b]YES![-::-] %s = %s",
-					word, outcome.pinyins.ColorString())
+			if outcome := assess.Assess(pincache, entries, answer); outcome.IsGood() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
@@ -66,8 +65,7 @@ func main2() error {
 					panic(err)
 				}
 			} else {
-				fmt.Fprintf(root.Results, "\n[red::b]NO! %s", outcome.Correction())
-				root.Results.Bad(word, false, &attempt)
+				root.Results.Bad(word, outcome, false, &attempt)
 			}
 		})
 
