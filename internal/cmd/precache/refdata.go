@@ -9,12 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/marcelocantos/flac/internal/pinyin"
-	"github.com/marcelocantos/flac/internal/proto/refdata"
-	"github.com/marcelocantos/flac/internal/refdata/words"
 	"github.com/pierrec/lz4"
 	"github.com/spf13/afero"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/marcelocantos/flac/internal/pinyin"
+	"github.com/marcelocantos/flac/internal/proto/refdata"
+	"github.com/marcelocantos/flac/internal/refdata/words"
 )
 
 var (
@@ -40,8 +41,6 @@ func cacheRefData(
 	dictPaths []string,
 	dest string,
 ) error {
-	pincache := pinyin.Cache{}
-
 	result := &refdata.RefData{
 		WordList: &refdata.WordList{
 			Frequencies: map[string]int32{},
@@ -61,7 +60,7 @@ func cacheRefData(
 	wl := &words.WordList{WordList: result.WordList}
 
 	for _, path := range dictPaths {
-		if err := loadCEDict(pincache, fs, path, wl, result.Dict); err != nil {
+		if err := loadCEDict(fs, path, wl, result.Dict); err != nil {
 			return err
 		}
 	}
@@ -114,12 +113,12 @@ func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
 }
 
 func loadCEDict(
-	pincache pinyin.Cache,
 	fs afero.Fs,
 	path string,
 	wl *words.WordList,
 	cedict *refdata.CEDict,
 ) error {
+	pincache := pinyin.Cache{}
 	data, err := afero.ReadFile(fs, path)
 	if err != nil {
 		return err

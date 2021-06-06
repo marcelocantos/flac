@@ -5,11 +5,11 @@ import (
 	_ "embed"
 	"io/ioutil"
 
+	"github.com/pierrec/lz4"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/proto/refdata"
 	"github.com/marcelocantos/flac/internal/refdata/words"
-	"github.com/pierrec/lz4"
 )
 
 var (
