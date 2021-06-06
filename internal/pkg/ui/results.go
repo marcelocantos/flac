@@ -4,8 +4,9 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/marcelocantos/flac/internal/data"
 	"github.com/rivo/tview"
+
+	"github.com/marcelocantos/flac/internal/pkg/data"
 )
 
 func atLeast(min int) func(i int) int {

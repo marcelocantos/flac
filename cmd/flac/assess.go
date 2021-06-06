@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/marcelocantos/flac/internal/pinyin"
-	"github.com/marcelocantos/flac/internal/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/pinyin"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
 var (

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcelocantos/flac/internal/data"
 	"github.com/rivo/tview"
+
+	"github.com/marcelocantos/flac/internal/pkg/data"
 )
 
 type Root struct {

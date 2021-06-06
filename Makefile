@@ -4,13 +4,13 @@ all : flac
 empty :=
 space := $(empty) $(empty)
 
-REFDATA_PB = internal/proto/refdata/refdata.pb.go
+REFDATA_PB = internal/pkg/proto/refdata/refdata.pb.go
 
 REFDATA_SRCS = \
 	refdata/cedict_1_0_ts_utf-8_mdbg.txt \
 	refdata/addenda.txt
 
-REFDATA_CACHE = internal/refdata/refdata.cache
+REFDATA_CACHE = internal/pkg/refdata/refdata.cache
 
 WORDS = refdata/words.txt
 

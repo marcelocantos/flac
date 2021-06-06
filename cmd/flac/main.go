@@ -7,10 +7,10 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/rivo/tview"
 
-	"github.com/marcelocantos/flac/internal/data"
-	"github.com/marcelocantos/flac/internal/pinyin"
-	"github.com/marcelocantos/flac/internal/refdata"
-	"github.com/marcelocantos/flac/internal/ui"
+	"github.com/marcelocantos/flac/internal/pkg/data"
+	"github.com/marcelocantos/flac/internal/pkg/pinyin"
+	"github.com/marcelocantos/flac/internal/pkg/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/ui"
 )
 
 func main2() error {

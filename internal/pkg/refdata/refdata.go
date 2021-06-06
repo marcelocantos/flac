@@ -8,8 +8,8 @@ import (
 	"github.com/pierrec/lz4"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/marcelocantos/flac/internal/proto/refdata"
-	"github.com/marcelocantos/flac/internal/refdata/words"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/refdata/words"
 )
 
 var (

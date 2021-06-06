@@ -1,7 +1,7 @@
 package words
 
 import (
-	"github.com/marcelocantos/flac/internal/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
 type WordList struct {

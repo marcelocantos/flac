@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/afero"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/marcelocantos/flac/internal/pinyin"
-	"github.com/marcelocantos/flac/internal/proto/refdata"
-	"github.com/marcelocantos/flac/internal/refdata/words"
+	"github.com/marcelocantos/flac/internal/pkg/pinyin"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/refdata/words"
 )
 
 var (

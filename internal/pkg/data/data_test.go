@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/marcelocantos/flac/internal/data"
+	"github.com/marcelocantos/flac/internal/pkg/data"
 )
 
 var rawwords = []string{
