@@ -9,7 +9,7 @@ import (
 
 var (
 	inputRE = regexp.MustCompile(
-		`(?i)^[a-zü]+([1-5]+(/[a-zü]+[1-5]+)*(/([a-zü]+[1-5]?)?)?)?$`)
+		`(?i)^[a-zü]+([1-5]+((?:/|\s+)?[a-zü]+[1-5]+)*((?:/|\s+)?([a-zü]+[1-5]?)?)?)?$`)
 )
 
 type PinyinInput struct {

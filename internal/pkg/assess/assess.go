@@ -3,6 +3,7 @@ package assess
 import (
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
@@ -22,41 +23,78 @@ func (o *Outcome) Alts() pinyin.Alts {
 	return o.alts
 }
 
-func Assess(pincache pinyin.Cache, entries *refdata.CEDict_Entries, answer string) *Outcome {
+func Assess(
+	pincache pinyin.Cache,
+	word string,
+	entries *refdata.CEDict_Entries,
+	answer string,
+) *Outcome {
 	o := &Outcome{good: true}
 
-	words := alternativeSepRE.Split(answer, -1)
-	alts := pinyin.Alts{}
-	for _, word := range words {
-		a, err := pincache.WordAlts(word)
-		if err != nil {
-			o.good = false
-		}
-		alts = append(alts, a...)
-	}
-	sort.Sort(alts)
-	o.alts = alts
-
-	if o.good {
-		if len(alts) != len(entries.Definitions) {
-			o.good = false
-		} else {
-			for _, p := range alts {
-				if entries.Definitions[p.RawString()] == nil {
-					o.good = false
-					break
+	tokenses, err := pinyin.Lex(answer)
+	if err != nil {
+		o.good = false
+	} else {
+		var alts pinyin.Alts
+		if len([]rune(word)) == 1 {
+			for _, tokens := range tokenses {
+				for _, token := range tokens {
+					alts = append(alts, token.Alts()...)
 				}
+			}
+		} else {
+			for _, tokens := range tokenses {
+				var word pinyin.Word
+				for _, token := range tokens {
+					alts := token.Alts()
+					if len(alts) != 1 {
+						o.good = false
+						break
+					}
+					word = append(word, alts[0]...)
+				}
+				alts = append(alts, word)
+			}
+		}
+		if o.good {
+			o.alts = alts
+
+			altMap := map[string]bool{}
+			covered := map[string]bool{}
+			for _, alt := range alts {
+				altMap[alt.RawString()] = true
+			}
+			for raw := range entries.Definitions {
+				if altMap[raw] {
+					covered[raw] = true
+					continue
+				}
+				lraw := strings.ToLower(raw)
+				if altMap[lraw] {
+					covered[lraw] = true
+					continue
+				}
+				o.good = false
+				break
+			}
+			if len(covered) != len(altMap) {
+				o.good = false
 			}
 		}
 	}
+
 	if !o.good {
 		// log.Printf("%v != %v", alts.RawString(), entries.Definitions)
-		pinyins := make(pinyin.Alts, 0, len(entries.Definitions))
-		for word := range entries.Definitions {
-			pinyins = append(pinyins, pinyin.Word{pincache.MustNewPinyinNoResidue(word)})
+		alts := make(pinyin.Alts, 0, len(entries.Definitions))
+		for raw := range entries.Definitions {
+			word, err := pincache.NewWord(raw)
+			if err != nil {
+				panic(err)
+			}
+			alts = append(alts, word)
 		}
-		sort.Sort(pinyins)
-		o.correction = pinyins.ColorString()
+		sort.Sort(alts)
+		o.correction = alts.ColorString()
 	}
 	return o
 }

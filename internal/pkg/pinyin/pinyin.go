@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([,·])|([a-zü:]+)([1-5]+))\s*`)
+	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([,·/])|([a-z:]+)([1-5]+))\s*`)
 )
 
 type Tone int8
@@ -50,14 +50,20 @@ func newPinyin(raw string) (_ Pinyin, residue string, _ error) {
 		groups[1] == "" && len(groups[3]) != 1 {
 		return Pinyin{}, "", errors.Errorf("%q: invalid pinyin", raw)
 	}
+
 	syllable := groups[2]
+	syllable = strings.ReplaceAll(syllable, "v", "ü")
+	syllable = strings.ReplaceAll(syllable, "u:", "ü")
+
 	tone, err := strconv.Atoi(groups[3])
 	if err != nil {
 		panic(err)
 	}
-	syllable = strings.ReplaceAll(syllable, "v", "ü")
-	syllable = strings.ReplaceAll(syllable, "u:", "ü")
 
+	return newPinyinFromSyllableAndTone(syllable, tone), raw[len(groups[0]):], nil
+}
+
+func newPinyinFromSyllableAndTone(syllable string, tone int) Pinyin {
 	chars := []rune(syllable)
 
 	v := 0
@@ -103,7 +109,7 @@ func newPinyin(raw string) (_ Pinyin, residue string, _ error) {
 		pinyin:   string(chars),
 		syllable: strings.Replace(syllable, "ü", "v", 1),
 		tone:     Tone(tone),
-	}, raw[len(groups[0]):], nil
+	}
 }
 
 func (p Pinyin) Less(q Pinyin) bool {

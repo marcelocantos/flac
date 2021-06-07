@@ -32,7 +32,7 @@ func (c Cache) NewPinyin(raw string) (_ Pinyin, residue string, _ error) {
 		if err != nil {
 			return Pinyin{}, "", err
 		}
-		c[raw] = p
+		// c[raw] = p
 	}
 	return p, residue, nil
 }
@@ -42,7 +42,7 @@ func (c Cache) NewWord(raw string) (Word, error) {
 	for residue := raw; residue != ""; {
 		var p Pinyin
 		var err error
-		p, residue, err = c.NewPinyin(raw)
+		p, residue, err = c.NewPinyin(residue)
 		if err != nil {
 			return nil, errors.WrapPrefix(err, fmt.Sprintf("%q: invalid word form", raw), 0)
 		}

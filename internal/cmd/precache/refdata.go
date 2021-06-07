@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"log"
 	"regexp"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/pierrec/lz4"
 	"github.com/spf13/afero"
+	"github.com/spkg/bom"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
@@ -88,21 +88,13 @@ func cacheRefData(
 }
 
 func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
-	words_data, err := afero.ReadFile(fs, path)
+	wordsFile, err := fs.Open(path)
 	if err != nil {
 		return err
 	}
-
-	// Skip BOM.
-	if []rune(string(words_data[:3]))[0] == 0xfeff {
-		words_data = words_data[3:]
-	}
-
-	wordsFile := bytes.NewBuffer(words_data)
-
-	scanner := bufio.NewScanner(wordsFile)
 	i := -1
 	added := 0
+	scanner := bufio.NewScanner(bom.NewReader(wordsFile))
 	for scanner.Scan() {
 		i++
 		if line := scanner.Text(); line != "" {
@@ -132,12 +124,12 @@ func loadCEDict(
 	cedict *refdata.CEDict,
 ) error {
 	pincache := pinyin.Cache{}
-	data, err := afero.ReadFile(fs, path)
+	file, err := fs.Open(path)
 	if err != nil {
 		return err
 	}
-	scanner := bufio.NewScanner(bytes.NewBuffer(data))
 	lineno := 0
+	scanner := bufio.NewScanner(file)
 scanning:
 	for scanner.Scan() {
 		lineno++

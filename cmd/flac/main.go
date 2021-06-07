@@ -57,7 +57,7 @@ func main2() error {
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := assess.Assess(pincache, entries, answer); outcome.IsGood() {
+			if outcome := assess.Assess(pincache, word, entries, answer); outcome.IsGood() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
