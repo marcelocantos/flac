@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/rivo/tview v0.0.0-20210531104647-807e706f86d1
 	github.com/spf13/afero v1.6.0
-	github.com/spkg/bom v1.0.0 // indirect
+	github.com/spkg/bom v1.0.0
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect

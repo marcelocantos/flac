@@ -64,6 +64,9 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
 	if m == nil {
 		return false
 	}
+	if !pi.prefixes[m[2]] {
+		return false
+	}
 	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {
 		if _, err := (pinyin.Cache{}.WordAlts(m[0])); err != nil {
 			return false
