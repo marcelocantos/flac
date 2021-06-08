@@ -14,6 +14,22 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
+var (
+	brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
+)
+
+func logscore(score int) float64 {
+	return math.Log(float64(score)) / math.Log(1.5)
+}
+
+func brailleScore(score int) string {
+	if score <= 0 {
+		return ""
+	}
+	s := int(logscore(score))
+	return strings.Repeat("⣿", s/8) + brailleBars[s%8]
+}
+
 func atLeast(min int) func(i int) int {
 	return func(i int) int {
 		if i < min {
@@ -26,12 +42,12 @@ func atLeast(min int) func(i int) int {
 type Results struct {
 	*tview.TextView
 
-	db        *data.Database
-	rd        *refdata.RefData
-	pincache  pinyin.Cache
-	wordsSeen map[string]bool
-	history   []string
-	goods     []string
+	db         *data.Database
+	rd         *refdata.RefData
+	pincache   pinyin.Cache
+	wordScores map[string]int
+	history    []string
+	goods      []string
 
 	// Handlers
 	scoreChanged func(word string, score int)
@@ -48,7 +64,7 @@ func newResults(db *data.Database, rd *refdata.RefData) *Results {
 		db:           db,
 		rd:           rd,
 		pincache:     pinyin.Cache{},
-		wordsSeen:    map[string]bool{},
+		wordScores:   map[string]int{},
 		scoreChanged: func(word string, score int) {},
 	}
 	return results.refreshText()
@@ -78,7 +94,6 @@ func (r *Results) appendHistory(lines ...string) {
 }
 
 func (r *Results) bump(word string, bump func(score int) (int, bool)) error {
-	r.wordsSeen[word] = true
 	score, err := r.score(word)
 	if err != nil {
 		return err
@@ -92,11 +107,19 @@ func (r *Results) bump(word string, bump func(score int) (int, bool)) error {
 }
 
 func (r *Results) score(word string) (int, error) {
-	score, err := r.db.WordScore(word)
-	if _, is := err.(data.ErrNotFound); is {
-		return -1, nil
+	score, has := r.wordScores[word]
+	if !has {
+		var err error
+		score, err = r.db.WordScore(word)
+		if _, is := err.(data.ErrNotFound); is {
+			return -1, nil
+		}
+		if err != nil {
+			return 0, err
+		}
+		r.wordScores[word] = score
 	}
-	return score, err
+	return score, nil
 }
 
 func (r *Results) SetScoreChanged(f func(word string, score int)) *Results {
@@ -111,7 +134,11 @@ func (r *Results) Good(word string, easy bool) error {
 		return err
 	}
 
-	r.goods = append(r.goods, word)
+	score, err := r.score(word)
+	if err != nil {
+		return err
+	}
+	r.goods = append(r.goods, word+brailleScore(score))
 	r.refreshText()
 	return nil
 }
