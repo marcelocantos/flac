@@ -4,12 +4,14 @@ import (
 	"regexp"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/rivo/tview"
 )
 
 var (
 	inputRE = regexp.MustCompile(
-		`(?i)^[a-zü]+([1-5]+((?:/|\s+)?[a-zü]+[1-5]+)*((?:/|\s+)?([a-zü]+[1-5]?)?)?)?$`)
+		`(?i)^(?:[a-z]+[1-5]+(?:\s*(?:[/,·]\s*)?))*?(([a-z]+)[1-5]*|)$`)
+	inputCharRE = regexp.MustCompile(`([a-z]+)[1-5]+`)
 )
 
 type PinyinInput struct {
@@ -58,20 +60,28 @@ func (pi *PinyinInput) SetGiveUp(giveUp func()) *PinyinInput {
 }
 
 func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
-	return inputRE.Match([]byte(textToCheck))
-	// d := len(textToCheck) - 1
-	// if '0' <= textToCheck[d] && textToCheck[d] <= '5' {
-	// 	i := strings.IndexAny(textToCheck[:d], "12345")
-	// 	return pi.syllables[textToCheck[:i]]
-	// }
-	// return pi.prefixes[textToCheck]
+	m := inputRE.FindStringSubmatch(textToCheck)
+	if m == nil {
+		return false
+	}
+	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {
+		if _, err := (pinyin.Cache{}.WordAlts(m[0])); err != nil {
+			return false
+		}
+		if !pi.syllables[m[1]] {
+			return false
+		}
+	}
+	return true
 }
 
 func (pi *PinyinInput) done(key tcell.Key) {
 	switch key {
 	case tcell.KeyEnter:
-		if pi.GetText() != "" {
-			pi.submit(pi.GetText())
+		text := pi.GetText()
+		m := inputRE.FindStringSubmatch(text)
+		if _, err := (pinyin.Cache{}).WordAlts(m[1]); err == nil {
+			pi.submit(text)
 		}
 	case tcell.KeyEscape:
 		pi.giveUp()

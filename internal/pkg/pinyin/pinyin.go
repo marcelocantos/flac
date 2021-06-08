@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([,·/])|([a-z:]+)([1-5]+))\s*`)
+	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([/,·])|([a-z:]+)([1-5]+))\s*`)
 )
 
 type Tone int8
