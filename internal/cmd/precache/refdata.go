@@ -22,6 +22,9 @@ var (
 	cedictDefRE = regexp.MustCompile(
 		`(\S+) (\S+) \[((?:[\w:]+ (?:(?:[\w:]+|[,·]) )*)?[\w:]+)\] /(.*)/$`)
 
+	cedictRemovalRE = regexp.MustCompile(
+		`- (\S+) (\S+) \[((?:[\w:]+ (?:(?:[\w:]+|[,·]) )*)?[\w:]+)\]`)
+
 	// Detect traditional-only variants.
 	tradOnlyVariantRE = regexp.MustCompile(
 		`^((?:.) (.) \[(.*?)\] /)(?:old )?variant of (?:.\|)?(?P<2>.)\[(?P<3>.*?)\]/`)
@@ -138,8 +141,33 @@ scanning:
 				return errors.WrapPrefix(err, fmt.Sprintf("%d: %s", lineno, line), 0)
 			}
 
+			if match := cedictRemovalRE.FindStringSubmatch(line); match != nil {
+				log.Print(match)
+				simplified := match[2]
+				if entries, has := cedict.Entries[simplified]; has {
+					word, err := pincache.NewWord(match[3])
+					if err != nil {
+						return lineError(err)
+					}
+					answer := word.RawString()
+					if _, has := entries.Definitions[answer]; has {
+						log.Printf("  Removing %s", answer)
+						delete(entries.Definitions, answer)
+						if len(entries.Definitions) == 0 {
+							log.Printf("  Removing %s", simplified)
+							delete(cedict.Entries, simplified)
+						}
+					} else {
+						log.Printf("  %s not found", answer)
+					}
+				} else {
+					log.Printf("  %s not found", simplified)
+				}
+				continue
+			}
+
 			match := cedictDefRE.FindStringSubmatch(line)
-			if len(match) != 5 {
+			if match == nil {
 				return lineError(errors.Errorf("no match"))
 			}
 			traditional := match[1]

@@ -6,6 +6,7 @@ space := $(empty) $(empty)
 
 REFDATA_PB = internal/pkg/proto/refdata/refdata.pb.go
 
+# addenda.txt must come second, so its removals get applied.
 REFDATA_SRCS = \
 	refdata/cedict_1_0_ts_utf-8_mdbg.txt \
 	refdata/addenda.txt
