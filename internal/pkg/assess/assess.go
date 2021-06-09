@@ -9,9 +9,7 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
-var (
-	alternativeSepRE = regexp.MustCompile(`\s*/\s*`)
-)
+var alternativeSepRE = regexp.MustCompile(`\s*/\s*`)
 
 type Outcome struct {
 	good       bool

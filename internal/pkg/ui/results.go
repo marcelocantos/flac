@@ -98,7 +98,8 @@ func (r *Results) bump(word string, bump func(score int) (int, bool)) error {
 	if newpos {
 		pos = score + rand.Intn(1+score*3/2-score)
 	}
-	return r.db.UpdateScoreAndPos(word, score, pos)
+
+	return r.setScoreAndPos(word, score, pos)
 }
 
 func (r *Results) score(word string) (int, error) {
@@ -115,6 +116,11 @@ func (r *Results) score(word string) (int, error) {
 		r.wordScores[word] = score
 	}
 	return score, nil
+}
+
+func (r *Results) setScoreAndPos(word string, score, pos int) error {
+	r.wordScores[word] = score
+	return r.db.UpdateScoreAndPos(word, score, pos)
 }
 
 func (r *Results) SetScoreChanged(f func(word string, score int)) *Results {
