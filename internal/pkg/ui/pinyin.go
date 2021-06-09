@@ -10,12 +10,14 @@ import (
 
 var (
 	inputRE = regexp.MustCompile(
-		`(?i)^(?:[a-z]+[1-5]+(?:\s*(?:[/,·]\s*)?))*?(([a-z]+)[1-5]*|)$`)
+		`(?i)^(?:[a-z]+[1-5]+(?:\s*(?:[/,·]\s*)?))*?(([a-z]+)([1-5]*)|)$`)
 	inputCharRE = regexp.MustCompile(`([a-z]+)[1-5]+`)
 )
 
 type PinyinInput struct {
 	*tview.InputField
+
+	compound bool
 
 	syllables map[string]bool
 	prefixes  map[string]bool
@@ -35,6 +37,11 @@ func newPinyinInput() *PinyinInput {
 	input.SetAcceptanceFunc(input.accept)
 	input.SetDoneFunc(input.done)
 	return input
+}
+
+func (pi *PinyinInput) SetWord(word string) {
+	pi.SetLabel(word + ":")
+	pi.compound = len([]rune(word)) > 1
 }
 
 func (pi *PinyinInput) SetValidSyllables(syllables map[string]bool) *PinyinInput {
@@ -68,7 +75,11 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
 		return false
 	}
 	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {
-		if _, err := (pinyin.Cache{}.WordAlts(m[0])); err != nil {
+		alts, err := (pinyin.Cache{}.WordAlts(m[0]))
+		if err != nil {
+			return false
+		}
+		if pi.compound && alts.Len() > 1 {
 			return false
 		}
 		if !pi.syllables[m[1]] {

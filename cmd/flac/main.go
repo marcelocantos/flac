@@ -39,7 +39,7 @@ func main2() error {
 		if err != nil {
 			return err
 		}
-		root.Input.SetLabel(word + ":")
+		root.Input.SetWord(word)
 		root.Input.SetText("")
 		attempt = 1
 		return nil
