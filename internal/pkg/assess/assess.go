@@ -24,7 +24,6 @@ func (o *Outcome) Alts() pinyin.Alts {
 }
 
 func Assess(
-	pincache pinyin.Cache,
 	word string,
 	entries *refdata.CEDict_Entries,
 	answer string,
@@ -87,7 +86,7 @@ func Assess(
 		// log.Printf("%v != %v", alts.RawString(), entries.Definitions)
 		alts := make(pinyin.Alts, 0, len(entries.Definitions))
 		for raw := range entries.Definitions {
-			word, err := pincache.NewWord(raw)
+			word, err := pinyin.NewWord(raw)
 			if err != nil {
 				panic(err)
 			}

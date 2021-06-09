@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCacheNewWord(t *testing.T) {
-	word, err := Cache{}.NewWord("wo3 men5")
+func TestNewWord(t *testing.T) {
+	word, err := NewWord("wo3 men5")
 	require.NoError(t, err)
 	assert.Equal(t,
 		Word{

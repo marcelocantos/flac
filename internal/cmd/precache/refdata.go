@@ -70,7 +70,6 @@ func cacheRefData(
 		}
 	}
 
-	log.Printf("dest: %s", dest)
 	out, err := fs.Create(dest)
 	if err != nil {
 		return err
@@ -126,7 +125,6 @@ func loadCEDict(
 	wl *refdata.WordList,
 	cedict *refdata.CEDict,
 ) error {
-	pincache := pinyin.Cache{}
 	file, err := fs.Open(path)
 	if err != nil {
 		return err
@@ -145,7 +143,7 @@ scanning:
 				log.Print(match)
 				simplified := match[2]
 				if entries, has := cedict.Entries[simplified]; has {
-					word, err := pincache.NewWord(match[3])
+					word, err := pinyin.NewWord(match[3])
 					if err != nil {
 						return lineError(err)
 					}
@@ -205,7 +203,7 @@ scanning:
 					line = line2
 				}
 			}
-			word, err := pincache.NewWord(match[3])
+			word, err := pinyin.NewWord(match[3])
 			if err != nil {
 				return lineError(err)
 			}

@@ -75,7 +75,7 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
 		return false
 	}
 	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {
-		alts, err := (pinyin.Cache{}.WordAlts(m[0]))
+		alts, err := (pinyin.WordAlts(m[0]))
 		if err != nil {
 			return false
 		}
@@ -94,7 +94,7 @@ func (pi *PinyinInput) done(key tcell.Key) {
 	case tcell.KeyEnter:
 		text := pi.GetText()
 		m := inputRE.FindStringSubmatch(text)
-		if _, err := (pinyin.Cache{}).WordAlts(m[1]); err == nil {
+		if _, err := pinyin.WordAlts(m[1]); err == nil {
 			pi.submit(text)
 		}
 	case tcell.KeyEscape:

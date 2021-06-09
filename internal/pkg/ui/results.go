@@ -10,13 +10,10 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
-	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
-var (
-	brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
-)
+var brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
 
 func logscore(score int) float64 {
 	return math.Log(float64(score)) / math.Log(1.5)
@@ -44,7 +41,6 @@ type Results struct {
 
 	db         *data.Database
 	rd         *refdata.RefData
-	pincache   pinyin.Cache
 	wordScores map[string]int
 	history    []string
 	goods      []string
@@ -63,7 +59,6 @@ func newResults(db *data.Database, rd *refdata.RefData) *Results {
 		TextView:     view,
 		db:           db,
 		rd:           rd,
-		pincache:     pinyin.Cache{},
 		wordScores:   map[string]int{},
 		scoreChanged: func(word string, score int) {},
 	}

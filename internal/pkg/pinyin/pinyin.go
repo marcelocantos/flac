@@ -9,9 +9,7 @@ import (
 	"github.com/go-errors/errors"
 )
 
-var (
-	pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([/,·])|([a-z:]+)([1-5]+))\s*`)
-)
+var pinyinRE = regexp.MustCompile(`(?i)^\s*(?:([/,·])|([a-z:]+)([1-5]+))\s*`)
 
 type Tone int8
 
@@ -44,7 +42,7 @@ type Pinyin struct {
 	tone     Tone
 }
 
-func newPinyin(raw string) (_ Pinyin, residue string, _ error) {
+func NewPinyin(raw string) (_ Pinyin, residue string, _ error) {
 	groups := pinyinRE.FindStringSubmatch(raw)
 	if groups == nil ||
 		groups[1] == "" && len(groups[3]) != 1 {
@@ -122,7 +120,6 @@ func (p Pinyin) Less(q Pinyin) bool {
 		return p.syllable < q.syllable
 	}
 	return p.tone < q.tone
-
 }
 
 func (p Pinyin) String() string {

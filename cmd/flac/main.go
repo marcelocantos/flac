@@ -9,13 +9,11 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
-	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/refdata"
 	"github.com/marcelocantos/flac/internal/pkg/ui"
 )
 
 func main2() error {
-	pincache := pinyin.Cache{}
 	rd, err := refdata.New()
 	if err != nil {
 		return err
@@ -57,7 +55,7 @@ func main2() error {
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := assess.Assess(pincache, word, entries, answer); outcome.IsGood() {
+			if outcome := assess.Assess(word, entries, answer); outcome.IsGood() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
