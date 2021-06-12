@@ -22,8 +22,8 @@ type PinyinInput struct {
 	syllables map[string]bool
 	prefixes  map[string]bool
 
-	submit func(answer string)
-	giveUp func()
+	submitFunc func(answer string)
+	giveUpFunc func()
 }
 
 func newPinyinInput() *PinyinInput {
@@ -31,8 +31,8 @@ func newPinyinInput() *PinyinInput {
 		InputField: tview.NewInputField(),
 		syllables:  map[string]bool{},
 		prefixes:   map[string]bool{},
-		submit:     func(string) {},
-		giveUp:     func() {},
+		submitFunc: func(string) {},
+		giveUpFunc: func() {},
 	}
 	input.SetAcceptanceFunc(input.accept)
 	input.SetDoneFunc(input.done)
@@ -56,13 +56,13 @@ func (pi *PinyinInput) SetValidSyllables(syllables map[string]bool) *PinyinInput
 	return pi
 }
 
-func (pi *PinyinInput) SetSubmit(submit func(answer string)) *PinyinInput {
-	pi.submit = submit
+func (pi *PinyinInput) SetSubmitFunc(submit func(answer string)) *PinyinInput {
+	pi.submitFunc = submit
 	return pi
 }
 
-func (pi *PinyinInput) SetGiveUp(giveUp func()) *PinyinInput {
-	pi.giveUp = giveUp
+func (pi *PinyinInput) SetGiveUpFunc(giveUp func()) *PinyinInput {
+	pi.giveUpFunc = giveUp
 	return pi
 }
 
@@ -95,9 +95,9 @@ func (pi *PinyinInput) done(key tcell.Key) {
 		text := pi.GetText()
 		m := inputRE.FindStringSubmatch(text)
 		if _, err := pinyin.WordAlts(m[1]); err == nil {
-			pi.submit(text)
+			pi.submitFunc(text)
 		}
 	case tcell.KeyEscape:
-		pi.giveUp()
+		pi.giveUpFunc()
 	}
 }

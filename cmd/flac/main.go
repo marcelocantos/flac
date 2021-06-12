@@ -53,13 +53,13 @@ func main2() error {
 
 	root.Input.
 		SetValidSyllables(rd.Dict.Syllables).
-		SetSubmit(func(answer string) {
+		SetSubmitFunc(func(answer string) {
 			root.Input.SetText("")
 			entries := rd.Dict.Entries[word]
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := assess.Assess(word, entries, answer); outcome.Good {
+			if outcome := assess.Assess(word, entries, answer); outcome.Good() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
@@ -67,7 +67,12 @@ func main2() error {
 					panic(err)
 				}
 			} else {
-				root.Results.Bad(word, outcome, false, &attempt)
+				root.Results.NotGood(word, outcome, false, &attempt)
+			}
+		}).
+		SetChangedFunc(func(text string) {
+			if text != "" {
+				root.Results.ClearMessage()
 			}
 		})
 

@@ -11,8 +11,13 @@ import (
 type Outcome struct {
 	Word       string
 	Entries    *refdata.CEDict_Entries
-	Good       bool
+	Bad        int
+	Missing    int
 	AnswerAlts pinyin.Alts
+}
+
+func (o *Outcome) Good() bool {
+	return o.Bad == 0 && o.Missing == 0
 }
 
 func (o *Outcome) Correction() string {

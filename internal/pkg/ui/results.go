@@ -39,11 +39,14 @@ func atLeast(min int) func(i int) int {
 type Results struct {
 	*tview.TextView
 
-	db         *data.Database
-	rd         *refdata.RefData
+	db *data.Database
+	rd *refdata.RefData
+
 	wordScores map[string]int
-	history    []string
-	goods      []string
+
+	history  []string
+	goods    []string
+	messages []string
 
 	// Handlers
 	scoreChanged func(word string, score int)
@@ -71,6 +74,7 @@ func (r *Results) refreshText() *Results {
 
 	// Abuse history as a preallocated buffer for output.
 	output := append(r.history, r.goodsReport()...)
+	output = append(output, r.messages...)
 	r.history = output[:len(r.history)]
 
 	for i, h := range output {
@@ -165,6 +169,15 @@ func (r *Results) Good(word string, easy bool) error {
 	return nil
 }
 
+func (r *Results) NotGood(word string, outcome *outcome.Outcome, easy bool, attempt *int) error {
+	if outcome.Bad > 0 {
+		return r.Bad(word, outcome, easy, attempt)
+	}
+	r.messages = []string{"[red::]Incomplete: missing alternative(s)[-::]"}
+	r.refreshText()
+	return nil
+}
+
 func (r *Results) Bad(word string, outcome *outcome.Outcome, easy bool, attempt *int) error {
 	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
@@ -190,4 +203,11 @@ func (r *Results) Skip(word string, easy bool, attempt int) error {
 	return r.bump(word, func(score int) (int, bool) {
 		return atLeast(1)(score / 8), true
 	})
+}
+
+func (r *Results) ClearMessage() {
+	if r.messages != nil {
+		r.messages = nil
+		r.refreshText()
+	}
 }

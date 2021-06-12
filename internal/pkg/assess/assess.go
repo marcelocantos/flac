@@ -19,7 +19,7 @@ func Assess(
 	}
 	if answerAlts, ok := answerAlts(len([]rune(word)) == 1, answer); ok {
 		o.AnswerAlts = answerAlts
-		o.Good = assess(entries, answerAlts)
+		o.Bad, o.Missing = assess(entries, answerAlts)
 	}
 	return o
 }
@@ -52,23 +52,28 @@ func answerAlts(simple bool, answer string) (pinyin.Alts, bool) {
 	return answerAlts, true
 }
 
-func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts) bool {
-	altMap := map[string]bool{}
-	covered := map[string]bool{}
+func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts) (bad, missing int) {
+	answerMap := map[string]bool{}
 	for _, alt := range answerAlts {
-		altMap[alt.RawString()] = true
+		answerMap[alt.RawString()] = true
 	}
-	for raw := range entries.Definitions {
-		if altMap[raw] {
-			covered[raw] = true
-			continue
-		}
-		lraw := strings.ToLower(raw)
-		if altMap[lraw] {
-			covered[lraw] = true
-			continue
-		}
-		return false
+
+	defMap := map[string]bool{}
+	for def := range entries.Definitions {
+		defMap[strings.ToLower(def)] = true
 	}
-	return len(covered) == len(altMap)
+
+	for answer := range answerMap {
+		if !defMap[answer] {
+			bad++
+		}
+	}
+
+	for def := range defMap {
+		if !answerMap[def] {
+			missing++
+		}
+	}
+
+	return
 }
