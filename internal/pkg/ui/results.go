@@ -84,8 +84,18 @@ func (r *Results) goodsReport() []string {
 }
 
 func (r *Results) appendHistory(lines ...string) {
+	r.trimEphemeralContent()
 	r.history = append(r.history, lines...)
 	r.refreshText()
+}
+
+func (r *Results) trimEphemeralContent(line ...string) {
+	if len(r.history) > 0 {
+		last := len(r.history) - 1
+		// \u200b = zero width space, delimits ephemeral content to trim after initial
+		// display.
+		r.history[last] = strings.Split(r.history[last], "\u200b")[0]
+	}
 }
 
 func (r *Results) bump(word string, bump func(score int) (int, bool)) error {
@@ -139,8 +149,12 @@ func (r *Results) Good(word string, easy bool) error {
 	if err != nil {
 		return err
 	}
+
+	r.trimEphemeralContent()
+
 	r.goods = append(r.goods, word+brailleScore(score))
 	r.refreshText()
+
 	return nil
 }
 
@@ -164,6 +178,8 @@ func (r *Results) Bad(word string, outcome *assess.Outcome, easy bool, attempt *
 }
 
 func (r *Results) Skip(word string, easy bool, attempt int) error {
+	r.trimEphemeralContent()
+
 	return r.bump(word, func(score int) (int, bool) {
 		return atLeast(1)(score / 8), true
 	})

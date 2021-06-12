@@ -1,6 +1,7 @@
 package assess
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -88,7 +89,8 @@ func Assess(
 			alts = append(alts, word)
 		}
 		sort.Sort(alts)
-		o.correction = alts.ColorString()
+		// \u200b = zero width space
+		o.correction = fmt.Sprintf("%s\u200b = %s", word, alts.ColorString())
 	}
 	return o
 }
