@@ -8,8 +8,8 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
+	"github.com/marcelocantos/flac/internal/pkg/outcome"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
@@ -165,7 +165,7 @@ func (r *Results) Good(word string, easy bool) error {
 	return nil
 }
 
-func (r *Results) Bad(word string, outcome *assess.Outcome, easy bool, attempt *int) error {
+func (r *Results) Bad(word string, outcome *outcome.Outcome, easy bool, attempt *int) error {
 	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
 

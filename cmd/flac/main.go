@@ -59,7 +59,7 @@ func main2() error {
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := assess.Assess(word, entries, answer); outcome.IsGood() {
+			if outcome := assess.Assess(word, entries, answer); outcome.Good {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
