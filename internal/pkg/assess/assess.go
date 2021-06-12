@@ -17,20 +17,20 @@ func Assess(
 		Word:    word,
 		Entries: entries,
 	}
-	if answerAlts, ok := answerAlts(len([]rune(word)) == 1, answer); ok {
+	if answerAlts, ok := AnswerAlts(word, answer); ok {
 		o.AnswerAlts = answerAlts
 		o.Bad, o.Missing = assess(entries, answerAlts)
 	}
 	return o
 }
 
-func answerAlts(simple bool, answer string) (pinyin.Alts, bool) {
+func AnswerAlts(word string, answer string) (pinyin.Alts, bool) {
 	tokenses, err := pinyin.Lex(answer)
 	if err != nil {
 		return nil, false
 	}
 	var answerAlts pinyin.Alts
-	if simple {
+	if len([]rune(word)) == 1 {
 		for _, tokens := range tokenses {
 			for _, token := range tokens {
 				answerAlts = append(answerAlts, token.Alts()...)

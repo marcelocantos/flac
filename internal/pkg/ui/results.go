@@ -169,20 +169,19 @@ func (r *Results) Good(word string, easy bool) error {
 	return nil
 }
 
-func (r *Results) NotGood(word string, outcome *outcome.Outcome, easy bool, attempt *int) error {
+func (r *Results) NotGood(outcome *outcome.Outcome, easy bool, attempt *int) error {
 	if outcome.Bad > 0 {
-		return r.Bad(word, outcome, easy, attempt)
+		return r.Bad(outcome, easy, attempt)
 	}
-	r.messages = []string{"[red::]Incomplete: missing alternative(s)[-::]"}
-	r.refreshText()
+	r.SetMessage("[red::]Incomplete: missing alternative(s)[-::]")
 	return nil
 }
 
-func (r *Results) Bad(word string, outcome *outcome.Outcome, easy bool, attempt *int) error {
+func (r *Results) Bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
 	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
 
-	if err := r.bump(word, func(score int) (int, bool) {
+	if err := r.bump(outcome.Word, func(score int) (int, bool) {
 		// Multiply score by 1/2√(1 + attempt).
 		return atLeast(1)(score / int(2*penalty)), false
 	}); err != nil {
@@ -192,22 +191,24 @@ func (r *Results) Bad(word string, outcome *outcome.Outcome, easy bool, attempt 
 	r.appendHistory(r.goodsReport()...)
 	r.goods = nil
 
-	r.appendHistory(outcome.Correction())
+	r.appendHistory(outcome.ErrorMessage())
 
 	return nil
 }
 
-func (r *Results) Skip(word string, easy bool, attempt int) error {
+func (r *Results) GiveUp(outcome *outcome.Outcome) error {
 	r.trimEphemeralContent()
 
-	return r.bump(word, func(score int) (int, bool) {
+	r.SetMessage(outcome.Correction())
+	return r.bump(outcome.Word, func(score int) (int, bool) {
 		return atLeast(1)(score / 8), true
 	})
 }
 
-func (r *Results) ClearMessage() {
-	if r.messages != nil {
-		r.messages = nil
+func (r *Results) SetMessage(messages ...string) {
+	stale := len(messages) > 0 || len(r.messages) > 0
+	r.messages = messages
+	if stale {
 		r.refreshText()
 	}
 }

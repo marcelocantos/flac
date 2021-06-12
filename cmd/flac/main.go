@@ -9,6 +9,7 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
+	"github.com/marcelocantos/flac/internal/pkg/outcome"
 	"github.com/marcelocantos/flac/internal/pkg/refdata"
 	"github.com/marcelocantos/flac/internal/pkg/ui"
 )
@@ -59,7 +60,8 @@ func main2() error {
 			if entries == nil {
 				panic("no entry for " + word)
 			}
-			if outcome := assess.Assess(word, entries, answer); outcome.Good() {
+			outcome := assess.Assess(word, entries, answer)
+			if outcome.Good() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}
@@ -67,12 +69,24 @@ func main2() error {
 					panic(err)
 				}
 			} else {
-				root.Results.NotGood(word, outcome, false, &attempt)
+				root.Results.NotGood(outcome, false, &attempt)
+			}
+		}).
+		SetGiveUpFunc(func() {
+			outcome := &outcome.Outcome{
+				Word:    word,
+				Entries: rd.Dict.Entries[word],
+			}
+			if outcome.Entries == nil {
+				panic("no entry for " + word)
+			}
+			if err := root.Results.GiveUp(outcome); err != nil {
+				panic(err)
 			}
 		}).
 		SetChangedFunc(func(text string) {
 			if text != "" {
-				root.Results.ClearMessage()
+				root.Results.SetMessage()
 			}
 		})
 
