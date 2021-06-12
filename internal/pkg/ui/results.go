@@ -16,7 +16,7 @@ import (
 var brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
 
 func logscore(score int) float64 {
-	return math.Log(float64(score)) / math.Log(1.5)
+	return math.Log(float64(score)) / math.Log(2)
 }
 
 func brailleScore(score int) string {
@@ -130,7 +130,7 @@ func (r *Results) SetScoreChanged(f func(word string, score int)) *Results {
 
 func (r *Results) Good(word string, easy bool) error {
 	if err := r.bump(word, func(score int) (int, bool) {
-		return atLeast(2)(score) * 3 / 2, true
+		return atLeast(2)(2 * score), true
 	}); err != nil {
 		return err
 	}
@@ -145,12 +145,12 @@ func (r *Results) Good(word string, easy bool) error {
 }
 
 func (r *Results) Bad(word string, outcome *assess.Outcome, easy bool, attempt *int) error {
-	// Multiply score by 2/(3*sqrt(attempt)).
-	penalty := int(10 * math.Sqrt(float64(*attempt)))
+	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
 
 	if err := r.bump(word, func(score int) (int, bool) {
-		return atLeast(1)(score * 20 / 3 / penalty), false
+		// Multiply score by 1/2√(1 + attempt).
+		return atLeast(1)(score / int(2*penalty)), false
 	}); err != nil {
 		return err
 	}
