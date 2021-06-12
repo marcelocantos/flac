@@ -21,6 +21,13 @@ GO_SRCS = $(REFDATA_PB) $(shell find . -name '*.go')
 
 FLAC_SRCS = $(GO_SRCS) $(GEN_FILES)
 
+PRECACHE_DIRS = \
+	internal/cmd/precache \
+	internal/pkg/pinyin \
+	internal/pkg/proto/refdata
+
+PRECACHE_SRCS = $(foreach dir,,$(wildcard $(dir)/*.go))
+
 # generate
 
 .PHONY : gen
@@ -49,7 +56,7 @@ $(WORDS) : $(GLOBAL_WORDFREQ)
 flac : $(FLAC_SRCS)
 	go build ./cmd/flac
 
-precache : $(GO_SRCS)
+precache : $(PRECACHE_SRCS)
 	go build ./internal/cmd/precache
 
 # test
