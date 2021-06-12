@@ -10,7 +10,7 @@ import (
 
 var (
 	inputRE = regexp.MustCompile(
-		`(?i)^(?:[a-z]+[1-5]+(?:\s*(?:[/,·]\s*)?))*?(([a-z]+)([1-5]*)|)$`)
+		`(?i)^(?:[a-z]+[1-5]+(?:\s*(?:[/,·]\s*)?))*?(([a-z]+)([1-5]*)|)\s*$`)
 	inputCharRE = regexp.MustCompile(`([a-z]+)[1-5]+`)
 )
 
@@ -71,7 +71,7 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
 	if m == nil {
 		return false
 	}
-	if !pi.prefixes[m[2]] {
+	if m[2] != "" && !pi.prefixes[m[2]] {
 		return false
 	}
 	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {

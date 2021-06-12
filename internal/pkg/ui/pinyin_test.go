@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var expectedInputRE = regexp.MustCompile(`(.*)\((.*)\)`)
+var expectedInputRE = regexp.MustCompile(`^(.*)\((.*)\)(.*)$`)
 
 func TestInputREEmpty(t *testing.T) {
 	t.Parallel()
@@ -22,7 +22,6 @@ func TestInputREBadStart(t *testing.T) {
 	assertNoMatch(t, "1")
 	assertNoMatch(t, "12")
 	assertNoMatch(t, "/")
-	assertNoMatch(t, " ")
 	assertNoMatch(t, "!")
 }
 
@@ -126,7 +125,7 @@ func assertMatch(t *testing.T, pattern string) bool {
 
 	e := expectedInputRE.FindStringSubmatch(pattern)
 	require.NotEmpty(t, e)
-	all := e[1] + e[2]
+	all := e[1] + e[2] + e[3]
 	expected := e[2]
 
 	m := inputRE.FindStringSubmatch(all)
