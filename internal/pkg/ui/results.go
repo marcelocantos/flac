@@ -67,15 +67,23 @@ func newResults(db *data.Database, rd *refdata.RefData) *Results {
 
 func (r *Results) refreshText() *Results {
 	r.SetText("")
-	fmt.Fprintf(r, "%s你好！", strings.Repeat("\n", 999))
-	for _, h := range append(r.history, r.goodsReport()...) {
+	fmt.Fprintf(r, "%s你好，一起学中文吧！\n", strings.Repeat("\n", 999))
+
+	// Abuse history as a preallocated buffer for output.
+	output := append(r.history, r.goodsReport()...)
+	r.history = output[:len(r.history)]
+
+	for i, h := range output {
+		if i == len(r.history)-1 {
+			h = strings.SplitN(h, "\034", 2)[0]
+		}
 		fmt.Fprintf(r, "\n%s", h)
 	}
 	return r
 }
 
 func (r *Results) goodsReport() []string {
-	if r.goods == nil {
+	if len(r.goods) == 0 {
 		return nil
 	}
 	return []string{
@@ -92,9 +100,8 @@ func (r *Results) appendHistory(lines ...string) {
 func (r *Results) trimEphemeralContent(line ...string) {
 	if len(r.history) > 0 {
 		last := len(r.history) - 1
-		// \u200b = zero width space, delimits ephemeral content to trim after initial
-		// display.
-		r.history[last] = strings.Split(r.history[last], "\u200b")[0]
+		h := strings.SplitN(r.history[last], "\034", 2)
+		r.history[last] = h[len(h)-1]
 	}
 }
 
@@ -172,7 +179,7 @@ func (r *Results) Bad(word string, outcome *assess.Outcome, easy bool, attempt *
 	r.appendHistory(r.goodsReport()...)
 	r.goods = nil
 
-	r.appendHistory(fmt.Sprintf("❌ %s", outcome.Correction()))
+	r.appendHistory(outcome.Correction())
 
 	return nil
 }

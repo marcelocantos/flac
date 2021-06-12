@@ -14,6 +14,10 @@ import (
 )
 
 func main2() error {
+	if err := hackTerminfo(); err != nil {
+		return err
+	}
+
 	rd, err := refdata.New()
 	if err != nil {
 		return err

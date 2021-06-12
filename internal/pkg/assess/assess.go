@@ -27,14 +27,14 @@ func Assess(
 	o := &Outcome{good: true}
 
 	tokenses, err := pinyin.Lex(answer)
+	var answerAlts pinyin.Alts
 	if err != nil {
 		o.good = false
 	} else {
-		var alts pinyin.Alts
 		if len([]rune(word)) == 1 {
 			for _, tokens := range tokenses {
 				for _, token := range tokens {
-					alts = append(alts, token.Alts()...)
+					answerAlts = append(answerAlts, token.Alts()...)
 				}
 			}
 		} else {
@@ -48,15 +48,15 @@ func Assess(
 					}
 					word = append(word, alts[0]...)
 				}
-				alts = append(alts, word)
+				answerAlts = append(answerAlts, word)
 			}
 		}
 		if o.good {
-			o.alts = alts
+			o.alts = answerAlts
 
 			altMap := map[string]bool{}
 			covered := map[string]bool{}
-			for _, alt := range alts {
+			for _, alt := range answerAlts {
 				altMap[alt.RawString()] = true
 			}
 			for raw := range entries.Definitions {
@@ -89,8 +89,11 @@ func Assess(
 			alts = append(alts, word)
 		}
 		sort.Sort(alts)
-		// \u200b = zero width space
-		o.correction = fmt.Sprintf("%s\u200b = %s", word, alts.ColorString())
+		o.correction = fmt.Sprintf(
+			// […l] normally means "blink", but we hijacked it for strikeout.
+			// See cmd/flac/terminfo.go for details.
+			"❌ %s ≠ %s (%[1]s = %[3]s)\034❌ [#999999::]%[1]s ≠ [#999999::d]%[4]s[-::-]",
+			word, answerAlts.ColorString(), alts.ColorString(), answerAlts.String())
 	}
 	return o
 }
