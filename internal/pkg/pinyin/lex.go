@@ -4,9 +4,9 @@ import (
 	"github.com/go-errors/errors"
 )
 
-func Lex(raw string) ([][]Token, error) {
-	result := [][]Token{}
-	tokens := []Token{}
+func Lex(raw string) ([]Tokens, error) {
+	result := []Tokens{}
+	tokens := Tokens{}
 	for raw != "" {
 		groups := pinyinRE.FindStringSubmatch(raw)
 		if groups == nil {

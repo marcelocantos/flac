@@ -48,11 +48,74 @@ type Results struct {
 	stale        bool
 	refreshCount int
 
-	history  []string
-	goods    []string
-	messages []string
+	history []string
+	goods   []string
+	msgs    messages
 
 	scoreChangedFunc func(word string, score int)
+}
+
+func (r *Results) SetScoreChangedFunc(f func(word string, score int)) *Results {
+	r.scoreChangedFunc = f
+	return r
+}
+
+func (r *Results) Good(word string, easy bool) error {
+	defer r.refresh()()
+
+	if err := r.bump(word, func(score int) (int, bool) {
+		return atLeast(2)(2 * score), true
+	}); err != nil {
+		return err
+	}
+
+	score, err := r.score(word)
+	if err != nil {
+		return err
+	}
+
+	r.trimEphemeralContent()
+	r.appendGoods(word + brailleScore(score))
+	r.ClearMessages()
+
+	return nil
+}
+
+func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
+	defer r.refresh()()
+
+	if len(o.Bad) > 0 {
+		if err := r.bad(o, easy, attempt); err != nil {
+			return err
+		}
+	}
+
+	r.ClearMessages()
+
+	if len(o.TooShort) > 0 {
+		r.appendMessage("⚠️  Missing characters: %s", o.TooShort.ColorString())
+	}
+	if len(o.Bad) == 0 && o.Missing > 0 {
+		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
+	}
+	if len(o.Bad) > 0 {
+		r.appendMessage(
+			"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
+			o.Word, o.Bad.ColorString(), o.Bad.String())
+	}
+
+	return nil
+}
+
+func (r *Results) GiveUp(outcome *outcome.Outcome) error {
+	defer r.refresh()()
+
+	r.trimEphemeralContent()
+
+	r.setMessages(outcome.Correction())
+	return r.bump(outcome.Word, func(score int) (int, bool) {
+		return atLeast(1)(score / 8), true
+	})
 }
 
 func newResults(db *data.Database, rd *refdata.RefData) *Results {
@@ -91,18 +154,33 @@ func (r *Results) refresh() func() {
 
 			// Abuse history as a preallocated buffer for output.
 			output := append(r.history, r.goodsReport()...)
-			output = append(output, r.messages...)
+			output = append(output, r.msgs...)
 			r.history = output[:len(r.history)]
 
-			for i, h := range output {
-				if i == len(r.history)-1 {
-					h = strings.SplitN(h, "\034", 2)[0]
+			for _, h := range output {
+				if index := strings.IndexRune(h, '\034'); index >= 0 {
+					h = h[:index]
 				}
 				fmt.Fprintf(r, "\n%s", h)
 			}
 
 			r.stale = false
 		}
+	}
+}
+
+func (r *Results) appendGoods(goods ...string) {
+	if len(goods) > 0 {
+		r.goods = append(r.goods, goods...)
+		r.taint()
+	}
+}
+
+func (r *Results) clearGoods(goods ...string) {
+	if len(r.goods) > 0 {
+		r.appendHistory(r.goodsReport()...)
+		r.goods = nil
+		r.taint()
 	}
 }
 
@@ -169,45 +247,9 @@ func (r *Results) setScoreAndPos(word string, score, pos int) error {
 	return r.db.UpdateScoreAndPos(word, score, pos)
 }
 
-func (r *Results) SetScoreChangedFunc(f func(word string, score int)) *Results {
-	r.scoreChangedFunc = f
-	return r
-}
-
-func (r *Results) Good(word string, easy bool) error {
-	defer r.refresh()()
-
-	if err := r.bump(word, func(score int) (int, bool) {
-		return atLeast(2)(2 * score), true
-	}); err != nil {
-		return err
-	}
-
-	score, err := r.score(word)
-	if err != nil {
-		return err
-	}
-
-	r.trimEphemeralContent()
-	r.appendGoods(word + brailleScore(score))
-	r.ClearMessages()
-
-	return nil
-}
-
-func (r *Results) NotGood(outcome *outcome.Outcome, easy bool, attempt *int) error {
-	defer r.refresh()()
-
-	if outcome.Bad > 0 {
-		return r.bad(outcome, easy, attempt)
-	}
-
-	r.SetMessages("[red::]Incomplete: missing alternative(s)[-::]")
-
-	return nil
-}
-
 func (r *Results) bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
+	defer r.clearGoods()
+
 	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
 
@@ -220,65 +262,40 @@ func (r *Results) bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
 
 	r.trimEphemeralContent()
 	r.ClearMessages()
-	r.appendHistory(r.goodsReport()...)
-	r.appendHistory(outcome.ErrorMessage())
-	r.clearGoods()
 
 	return nil
 }
 
-func (r *Results) GiveUp(outcome *outcome.Outcome) error {
-	defer r.refresh()()
-
-	r.trimEphemeralContent()
-
-	r.SetMessages(outcome.Correction())
-	return r.bump(outcome.Word, func(score int) (int, bool) {
-		return atLeast(1)(score / 8), true
-	})
-}
-
-func (r *Results) clearGoods(goods ...string) {
-	if len(r.goods) > 0 {
-		r.goods = nil
-		r.taint()
-	}
-}
-
-func (r *Results) appendGoods(goods ...string) {
-	if len(goods) > 0 {
-		r.goods = append(r.goods, goods...)
-		r.taint()
-	}
-}
-
-func (r *Results) SetMessages(messages ...string) {
-	defer r.refresh()()
-
-	if len(r.messages) > 0 || len(messages) > 0 {
-		if !reflect.DeepEqual(r.messages, messages) {
-			r.messages = messages
-			r.taint()
-		}
-	}
-}
-
 func (r *Results) ClearMessages() {
-	r.SetMessages()
+	defer r.refresh()()
+
+	r.clearMessages()
 }
 
 // BlankOutMessages sets all messages to the empty string rather than simply
 // removing them. This clears them out without causing the view to scroll.
 func (r *Results) BlankOutMessages() {
-	if len(r.messages) > 0 {
-		n := 0
-		blanks := make([]string, 0, len(r.messages))
-		for _, m := range r.messages {
-			n += len(m)
-			blanks = append(blanks, "")
-		}
-		if n > 0 {
-			r.SetMessages(blanks...)
+	defer r.refresh()()
+
+	if r.msgs.blankOut() {
+		r.taint()
+	}
+}
+
+func (r *Results) setMessages(messages ...string) {
+	if len(r.msgs) > 0 || len(messages) > 0 {
+		if !reflect.DeepEqual(r.msgs, messages) {
+			r.msgs = messages
+			r.taint()
 		}
 	}
+}
+
+func (r *Results) appendMessage(format string, args ...interface{}) {
+	r.msgs = r.msgs.write(format, args...)
+	r.taint()
+}
+
+func (r *Results) clearMessages() {
+	r.setMessages()
 }

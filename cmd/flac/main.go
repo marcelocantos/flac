@@ -61,7 +61,7 @@ func main2() error {
 				panic("no entry for " + word)
 			}
 			outcome := assess.Assess(word, entries, answer)
-			if outcome.Good() {
+			if outcome.Pass() {
 				if err := root.Results.Good(word, false); err != nil {
 					panic(err)
 				}

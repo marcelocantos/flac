@@ -9,22 +9,17 @@ import (
 )
 
 type Outcome struct {
-	Word       string
-	Entries    *refdata.CEDict_Entries
-	Bad        int
-	Missing    int
-	AnswerAlts pinyin.Alts
-	Easy       bool
+	Word     string
+	Entries  *refdata.CEDict_Entries
+	Good     pinyin.Alts
+	Bad      pinyin.Alts
+	TooShort pinyin.Alts
+	Missing  int
+	Easy     bool
 }
 
-func (o *Outcome) Good() bool {
-	return o.Bad == 0 && o.Missing == 0
-}
-
-func (o *Outcome) ErrorMessage() string {
-	return fmt.Sprintf(
-		"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
-		o.Word, o.AnswerAlts.ColorString(), o.AnswerAlts.String())
+func (o *Outcome) Pass() bool {
+	return len(o.Bad)+len(o.TooShort)+o.Missing == 0
 }
 
 func (o *Outcome) Correction() string {
