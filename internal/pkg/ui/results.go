@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"strings"
 
 	"github.com/rivo/tview"
@@ -44,12 +45,14 @@ type Results struct {
 
 	wordScores map[string]int
 
+	stale        bool
+	refreshCount int
+
 	history  []string
 	goods    []string
 	messages []string
 
-	// Handlers
-	scoreChanged func(word string, score int)
+	scoreChangedFunc func(word string, score int)
 }
 
 func newResults(db *data.Database, rd *refdata.RefData) *Results {
@@ -58,32 +61,49 @@ func newResults(db *data.Database, rd *refdata.RefData) *Results {
 	view.SetBorder(true)
 	view.SetTitle("flac: learn 中文")
 
-	results := &Results{
-		TextView:     view,
-		db:           db,
-		rd:           rd,
-		wordScores:   map[string]int{},
-		scoreChanged: func(word string, score int) {},
+	r := &Results{
+		TextView:         view,
+		db:               db,
+		rd:               rd,
+		wordScores:       map[string]int{},
+		scoreChangedFunc: func(word string, score int) {},
+		stale:            true,
 	}
-	return results.refreshText()
+
+	r.refresh()()
+
+	return r
 }
 
-func (r *Results) refreshText() *Results {
-	r.SetText("")
-	fmt.Fprintf(r, "%s你好，一起学中文吧！\n", strings.Repeat("\n", 999))
+func (r *Results) taint() {
+	r.stale = true
+}
 
-	// Abuse history as a preallocated buffer for output.
-	output := append(r.history, r.goodsReport()...)
-	output = append(output, r.messages...)
-	r.history = output[:len(r.history)]
-
-	for i, h := range output {
-		if i == len(r.history)-1 {
-			h = strings.SplitN(h, "\034", 2)[0]
+func (r *Results) refresh() func() {
+	r.refreshCount++
+	return func() {
+		if r.refreshCount--; r.refreshCount != 0 {
+			return
 		}
-		fmt.Fprintf(r, "\n%s", h)
+		if r.stale {
+			r.SetText("")
+			fmt.Fprintf(r, "%s你好，一起学中文吧！\n", strings.Repeat("\n", 999))
+
+			// Abuse history as a preallocated buffer for output.
+			output := append(r.history, r.goodsReport()...)
+			output = append(output, r.messages...)
+			r.history = output[:len(r.history)]
+
+			for i, h := range output {
+				if i == len(r.history)-1 {
+					h = strings.SplitN(h, "\034", 2)[0]
+				}
+				fmt.Fprintf(r, "\n%s", h)
+			}
+
+			r.stale = false
+		}
 	}
-	return r
 }
 
 func (r *Results) goodsReport() []string {
@@ -96,16 +116,21 @@ func (r *Results) goodsReport() []string {
 }
 
 func (r *Results) appendHistory(lines ...string) {
-	r.trimEphemeralContent()
-	r.history = append(r.history, lines...)
-	r.refreshText()
+	if len(lines) > 0 {
+		r.history = append(r.history, lines...)
+		r.taint()
+	}
 }
 
 func (r *Results) trimEphemeralContent(line ...string) {
 	if len(r.history) > 0 {
 		last := len(r.history) - 1
 		h := strings.SplitN(r.history[last], "\034", 2)
-		r.history[last] = h[len(h)-1]
+		s := h[len(h)-1]
+		if r.history[last] != s {
+			r.history[last] = s
+			r.taint()
+		}
 	}
 }
 
@@ -144,12 +169,14 @@ func (r *Results) setScoreAndPos(word string, score, pos int) error {
 	return r.db.UpdateScoreAndPos(word, score, pos)
 }
 
-func (r *Results) SetScoreChanged(f func(word string, score int)) *Results {
-	r.scoreChanged = f
+func (r *Results) SetScoreChangedFunc(f func(word string, score int)) *Results {
+	r.scoreChangedFunc = f
 	return r
 }
 
 func (r *Results) Good(word string, easy bool) error {
+	defer r.refresh()()
+
 	if err := r.bump(word, func(score int) (int, bool) {
 		return atLeast(2)(2 * score), true
 	}); err != nil {
@@ -162,22 +189,25 @@ func (r *Results) Good(word string, easy bool) error {
 	}
 
 	r.trimEphemeralContent()
-
-	r.goods = append(r.goods, word+brailleScore(score))
-	r.refreshText()
+	r.appendGoods(word + brailleScore(score))
+	r.ClearMessages()
 
 	return nil
 }
 
 func (r *Results) NotGood(outcome *outcome.Outcome, easy bool, attempt *int) error {
+	defer r.refresh()()
+
 	if outcome.Bad > 0 {
-		return r.Bad(outcome, easy, attempt)
+		return r.bad(outcome, easy, attempt)
 	}
-	r.SetMessage("[red::]Incomplete: missing alternative(s)[-::]")
+
+	r.SetMessages("[red::]Incomplete: missing alternative(s)[-::]")
+
 	return nil
 }
 
-func (r *Results) Bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
+func (r *Results) bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
 	penalty := math.Sqrt(float64(1 + *attempt))
 	*attempt++
 
@@ -188,27 +218,67 @@ func (r *Results) Bad(outcome *outcome.Outcome, easy bool, attempt *int) error {
 		return err
 	}
 
+	r.trimEphemeralContent()
+	r.ClearMessages()
 	r.appendHistory(r.goodsReport()...)
-	r.goods = nil
-
 	r.appendHistory(outcome.ErrorMessage())
+	r.clearGoods()
 
 	return nil
 }
 
 func (r *Results) GiveUp(outcome *outcome.Outcome) error {
+	defer r.refresh()()
+
 	r.trimEphemeralContent()
 
-	r.SetMessage(outcome.Correction())
+	r.SetMessages(outcome.Correction())
 	return r.bump(outcome.Word, func(score int) (int, bool) {
 		return atLeast(1)(score / 8), true
 	})
 }
 
-func (r *Results) SetMessage(messages ...string) {
-	stale := len(messages) > 0 || len(r.messages) > 0
-	r.messages = messages
-	if stale {
-		r.refreshText()
+func (r *Results) clearGoods(goods ...string) {
+	if len(r.goods) > 0 {
+		r.goods = nil
+		r.taint()
+	}
+}
+
+func (r *Results) appendGoods(goods ...string) {
+	if len(goods) > 0 {
+		r.goods = append(r.goods, goods...)
+		r.taint()
+	}
+}
+
+func (r *Results) SetMessages(messages ...string) {
+	defer r.refresh()()
+
+	if len(r.messages) > 0 || len(messages) > 0 {
+		if !reflect.DeepEqual(r.messages, messages) {
+			r.messages = messages
+			r.taint()
+		}
+	}
+}
+
+func (r *Results) ClearMessages() {
+	r.SetMessages()
+}
+
+// BlankOutMessages sets all messages to the empty string rather than simply
+// removing them. This clears them out without causing the view to scroll.
+func (r *Results) BlankOutMessages() {
+	if len(r.messages) > 0 {
+		n := 0
+		blanks := make([]string, 0, len(r.messages))
+		for _, m := range r.messages {
+			n += len(m)
+			blanks = append(blanks, "")
+		}
+		if n > 0 {
+			r.SetMessages(blanks...)
+		}
 	}
 }

@@ -86,7 +86,7 @@ func main2() error {
 		}).
 		SetChangedFunc(func(text string) {
 			if text != "" {
-				root.Results.SetMessage()
+				root.Results.BlankOutMessages()
 			}
 		})
 
