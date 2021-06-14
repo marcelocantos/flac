@@ -99,9 +99,9 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
 	}
 	if len(o.Bad) > 0 {
-		r.appendMessage(
+		r.appendHistory(fmt.Sprintf(
 			"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
-			o.Word, o.Bad.ColorString(), o.Bad.String())
+			o.Word, o.Bad.ColorString(), o.Bad.String()))
 	}
 
 	return nil

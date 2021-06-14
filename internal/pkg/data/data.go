@@ -3,24 +3,26 @@ package data
 import (
 	"database/sql"
 	"fmt"
-	"regexp"
 
+	"github.com/go-errors/errors"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/pkg/errors"
 )
 
 type Database struct {
 	db *sql.DB
 
 	// Read
-	maxScoreStmt  *sql.Stmt
-	maxPosStmt    *sql.Stmt
-	wordScoreStmt *sql.Stmt
-	wordPosStmt   *sql.Stmt
-	wordAtStmt    *sql.Stmt
+	maxScoreStmt    *sql.Stmt
+	maxPosStmt      *sql.Stmt
+	wordScoreStmt   *sql.Stmt
+	wordPosStmt     *sql.Stmt
+	wordAtStmt      *sql.Stmt
+	queuedWordsStmt *sql.Stmt
 
 	// Write
 	enqueueWordStmt  *sql.Stmt
+	dequeueWordStmt  *sql.Stmt
 	updateScoreStmt  *sql.Stmt
 	rotateWords1Stmt *sql.Stmt
 	rotateWords2Stmt *sql.Stmt
@@ -56,7 +58,9 @@ func NewDatabase(path string) (*Database, error) {
 		&d.wordScoreStmt:   `SELECT score FROM word_score WHERE word = ?`,
 		&d.wordPosStmt:     `SELECT pos FROM queue WHERE word = ?`,
 		&d.wordAtStmt:      `SELECT word FROM queue WHERE pos = ?`,
+		&d.queuedWordsStmt: `SELECT word FROM queue`,
 		&d.enqueueWordStmt: `INSERT INTO queue (pos, word) VALUES (?, ?)`,
+		&d.dequeueWordStmt: `DELETE FROM queue WHERE word = ?`,
 		&d.updateScoreStmt: `INSERT OR REPLACE INTO word_score (word, score) VALUES (?, ?)`,
 		&d.rotateWords1Stmt: `
 			UPDATE queue
@@ -82,9 +86,7 @@ func (d *Database) Close() {
 	d.db.Close()
 }
 
-func (d *Database) Populate(words []string) error {
-	elideRE := regexp.MustCompile(`\P{Han}`)
-
+func (d *Database) Populate(wordList *refdata.WordList) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
@@ -98,10 +100,7 @@ func (d *Database) Populate(words []string) error {
 
 	getWordPos := d.wordPos(tx)
 	enqueueWord := tx.Stmt(d.enqueueWordStmt)
-	for _, word := range words {
-		if elideRE.MatchString(word) {
-			continue
-		}
+	for _, word := range wordList.Words {
 		_, err := getWordPos(word)
 		if err != nil {
 			if _, is := err.(ErrNotFound); !is {
@@ -111,6 +110,24 @@ func (d *Database) Populate(words []string) error {
 			enqueueWord.Exec(index, word)
 		}
 	}
+
+	queuedWords := tx.Stmt(d.queuedWordsStmt)
+	rows, err := queuedWords.Query()
+	if err != nil {
+		return err
+	}
+	var word string
+	var remove []string
+	for rows.Next() {
+		if err := rows.Scan(&word); err != nil {
+			return errors.Wrap(err, 0)
+		}
+		if _, has := wordList.Positions[word]; !has {
+			remove = append(remove, word)
+		}
+	}
+	d.removeWords(tx, remove)
+
 	return nil
 }
 
@@ -252,14 +269,16 @@ func (d *Database) MoveWord(word string, dest int) error {
 }
 
 func (d *Database) moveWord(tx *sql.Tx, word string, dest int) error {
-	max, err := d.maxPos(tx)
-	if err != nil {
-		return err
-	}
 	if dest < 0 {
 		dest = 0
-	} else if dest > max {
-		dest = max
+	} else {
+		max, err := d.maxPos(tx)
+		if err != nil {
+			return err
+		}
+		if dest > max {
+			dest = max
+		}
 	}
 
 	src, err := d.wordPos(tx)(word)
@@ -286,6 +305,24 @@ func (d *Database) moveWord(tx *sql.Tx, word string, dest int) error {
 		return err
 	}
 	_, err = tx.Stmt(d.rotateWords2Stmt).Exec()
+	return err
+}
+
+func (d *Database) removeWords(tx *sql.Tx, words []string) error {
+	max, err := d.maxPos(tx)
+	if err != nil {
+		return err
+	}
+
+	for _, word := range words {
+		if err := d.moveWord(tx, word, max); err != nil {
+			return err
+		}
+
+		if _, err := tx.Stmt(d.dequeueWordStmt).Exec(word); err != nil {
+			return err
+		}
+	}
 	return err
 }
 

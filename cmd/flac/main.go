@@ -14,8 +14,8 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/ui"
 )
 
-func main2() error {
-	if err := hackTerminfo(); err != nil {
+func main2() (err error) {
+	if err = hackTerminfo(); err != nil {
 		return err
 	}
 
@@ -30,7 +30,7 @@ func main2() error {
 		return err
 	}
 
-	db.Populate(rd.WordList.Words)
+	db.Populate(rd.WordList)
 
 	root := ui.New(db, rd)
 	var word string
@@ -58,7 +58,7 @@ func main2() error {
 			root.Input.SetText("")
 			entries := rd.Dict.Entries[word]
 			if entries == nil {
-				panic("no entry for " + word)
+				panic(errors.Errorf("no entry for %s", word))
 			}
 			outcome := assess.Assess(word, entries, answer)
 			if outcome.Pass() {
@@ -90,9 +90,18 @@ func main2() error {
 			}
 		})
 
+	defer func() {
+		if e := recover(); e != nil {
+			if e := e.(error); e != nil {
+				err = e.(error)
+			} else {
+				err = errors.Wrap(e, 0)
+			}
+		}
+	}()
 	app := tview.NewApplication().SetRoot(root, true).EnableMouse(true)
 	if err := app.Run(); err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil

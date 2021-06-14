@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -19,6 +20,8 @@ import (
 )
 
 var (
+	hanziRE = regexp.MustCompile(`^\p{Han}+`)
+
 	cedictDefRE = regexp.MustCompile(
 		`(\S+) (\S+) \[((?:[\w:]+ (?:(?:[\w:]+|[,·]) )*)?[\w:]+)\] /(.*)/$`)
 
@@ -56,19 +59,46 @@ func cacheRefData(
 		},
 	}
 
-	if err := loadWords(fs, wordsPath, result.WordList); err != nil {
+	wordEntryMap, err := loadWords(fs, wordsPath)
+	if err != nil {
 		return err
 	}
 
-	if len(result.WordList.Words) == 0 {
-		panic("???")
-	}
-
 	for _, path := range dictPaths {
-		if err := loadCEDict(fs, path, result.WordList, result.Dict); err != nil {
+		if err := loadCEDict(fs, path, wordEntryMap, result.Dict); err != nil {
 			return err
 		}
 	}
+
+	traditional := []string{}
+	missing := []string{}
+	for _, entry := range wordEntryMap {
+		word := entry.word
+		if _, has := result.Dict.Entries[word]; !has {
+			if _, has := result.Dict.TraditionalToSimplified[word]; has {
+				traditional = append(traditional, word)
+			} else {
+				missing = append(missing, word)
+			}
+		}
+	}
+	if len(traditional) > 0 {
+		log.Printf("Eliding traditional words: %s", strings.Join(traditional, "  "))
+	}
+	if len(missing) > 0 {
+		log.Printf("Eliding words with no definitions: %s", strings.Join(missing, "  "))
+	}
+	for _, word := range append(traditional, missing...) {
+		delete(wordEntryMap, word)
+	}
+
+	words := make(wordEntries, 0, len(wordEntryMap))
+	for _, entry := range wordEntryMap {
+		words = append(words, entry)
+	}
+	sort.Sort(words)
+
+	processWords(words, result.WordList)
 
 	out, err := fs.Create(dest)
 	if err != nil {
@@ -89,40 +119,66 @@ func cacheRefData(
 	return nil
 }
 
-func loadWords(fs afero.Fs, path string, wl *refdata.WordList) error {
+type wordEntry struct {
+	word      string
+	index     int
+	frequency int
+}
+
+type wordEntries []wordEntry
+
+func (e wordEntries) Len() int {
+	return len(e)
+}
+
+func (e wordEntries) Less(i, j int) bool {
+	a, b := e[i], e[j]
+	return a.index < b.index
+}
+
+func (e wordEntries) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
+func loadWords(fs afero.Fs, path string) (map[string]wordEntry, error) {
 	wordsFile, err := fs.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	i := -1
-	added := 0
 	scanner := bufio.NewScanner(bom.NewReader(wordsFile))
+	words := map[string]wordEntry{}
 	for scanner.Scan() {
 		i++
 		if line := scanner.Text(); line != "" {
 			parts := strings.SplitN(line, "\t", 2)
 			word := parts[0]
+			if !hanziRE.MatchString(word) {
+				continue
+			}
 			freq, err := strconv.Atoi(parts[1])
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			added++
-			wl.Words = append(wl.Words, word)
-			wl.Frequencies[word] = int64(freq)
-			wl.Positions[word] = int64(i)
+			words[word] = wordEntry{word: word, index: i, frequency: freq}
 		}
 	}
-	if len(wl.Words) == 0 {
-		panic(added)
+	return words, scanner.Err()
+}
+
+func processWords(entries []wordEntry, wl *refdata.WordList) {
+	for i, entry := range entries {
+		wl.Words = append(wl.Words, entry.word)
+		wl.Frequencies[entry.word] = int64(entry.frequency)
+		wl.Positions[entry.word] = int64(i)
 	}
-	return scanner.Err()
 }
 
 func loadCEDict(
 	fs afero.Fs,
 	path string,
-	wl *refdata.WordList,
+	wm map[string]wordEntry,
 	cedict *refdata.CEDict,
 ) error {
 	file, err := fs.Open(path)
@@ -170,7 +226,7 @@ scanning:
 			}
 			traditional := match[1]
 			simplified := match[2]
-			if !wl.Has(simplified) {
+			if _, has := wm[simplified]; !has {
 				continue
 			}
 
