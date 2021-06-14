@@ -26,7 +26,7 @@ PRECACHE_DIRS = \
 	internal/pkg/pinyin \
 	internal/pkg/proto/refdata
 
-PRECACHE_SRCS = $(foreach dir,,$(wildcard $(dir)/*.go))
+PRECACHE_SRCS = $(foreach dir,$(PRECACHE_DIRS),$(wildcard $(dir)/*.go))
 
 # generate
 
