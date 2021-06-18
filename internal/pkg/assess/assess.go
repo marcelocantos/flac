@@ -71,14 +71,31 @@ func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.
 			o.Good = append(o.Good, alt)
 		} else {
 			tooShort := false
+			badTones := false
 			for def := range defMap {
 				if strings.HasPrefix(def, answer) {
 					partialDefs[def] = true
 					tooShort = true
+				} else {
+					syllableErrors := 0
+					tonalErrors := 0
+					for i, p := range pinyin.MustNewWord(def) {
+						if alt[i].Syllable() != p.Syllable() {
+							syllableErrors++
+						}
+						if alt[i].Tone() != p.Tone() {
+							tonalErrors++
+						}
+					}
+					if syllableErrors == 0 && tonalErrors > 0 {
+						badTones = true
+					}
 				}
 			}
 			if tooShort {
 				o.TooShort = append(o.TooShort, alt)
+			} else if badTones {
+				o.BadTones = append(o.BadTones, alt)
 			} else {
 				o.Bad = append(o.Bad, alt)
 			}

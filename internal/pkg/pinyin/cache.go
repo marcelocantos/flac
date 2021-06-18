@@ -34,6 +34,14 @@ func NewWord(raw string) (Word, error) {
 	return word, nil
 }
 
+func MustNewWord(raw string) Word {
+	word, err := NewWord(raw)
+	if err != nil {
+		panic(err)
+	}
+	return word
+}
+
 func WordAlts(raw string) (Alts, error) {
 	g := pinyinsRE.FindStringSubmatch(raw)
 	if g == nil || len(g[0]) < len(raw) {

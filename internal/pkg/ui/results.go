@@ -104,7 +104,7 @@ func (r *Results) Good(word string, easy bool) error {
 func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 	defer r.refresh()()
 
-	if len(o.Bad) > 0 {
+	if o.Fail() {
 		if err := r.bad(o, easy, attempt); err != nil {
 			return err
 		}
@@ -113,10 +113,13 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 	r.ClearMessages()
 
 	if len(o.TooShort) > 0 {
-		r.appendMessage("⚠️  Missing characters: %s", o.TooShort.ColorString())
+		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString())
 	}
 	if len(o.Bad) == 0 && o.Missing > 0 {
 		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
+	}
+	if len(o.BadTones) > 0 {
+		r.appendMessage("[:gray:]🎹[:-:-] Only tone(s) need correcting!")
 	}
 	if len(o.Bad) > 0 {
 		r.appendHistory(fmt.Sprintf(

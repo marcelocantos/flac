@@ -14,12 +14,17 @@ type Outcome struct {
 	Good     pinyin.Alts
 	Bad      pinyin.Alts
 	TooShort pinyin.Alts
+	BadTones pinyin.Alts
 	Missing  int
 	Easy     bool
 }
 
 func (o *Outcome) Pass() bool {
-	return len(o.Bad)+len(o.TooShort)+o.Missing == 0
+	return len(o.Bad)+len(o.TooShort)+len(o.BadTones)+o.Missing == 0
+}
+
+func (o *Outcome) Fail() bool {
+	return len(o.Bad)+len(o.BadTones) > 0
 }
 
 func (o *Outcome) Correction() string {
