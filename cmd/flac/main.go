@@ -99,7 +99,7 @@ func main2() (err error) {
 			}
 		}
 	}()
-	app := tview.NewApplication().SetRoot(root, true).EnableMouse(true)
+	app := tview.NewApplication().SetRoot(root, true)
 	if err := app.Run(); err != nil {
 		return err
 	}

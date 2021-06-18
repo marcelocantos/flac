@@ -55,6 +55,26 @@ type Results struct {
 	scoreChangedFunc func(word string, score int)
 }
 
+func newResults(db *data.Database, rd *refdata.RefData) *Results {
+	view := tview.NewTextView()
+	view.SetDynamicColors(true)
+	view.SetBorder(true)
+	view.SetTitle("flac: learn 中文")
+
+	r := &Results{
+		TextView:         view,
+		db:               db,
+		rd:               rd,
+		wordScores:       map[string]int{},
+		scoreChangedFunc: func(word string, score int) {},
+		stale:            true,
+	}
+
+	r.refresh()()
+
+	return r
+}
+
 func (r *Results) SetScoreChangedFunc(f func(word string, score int)) *Results {
 	r.scoreChangedFunc = f
 	return r
@@ -116,26 +136,6 @@ func (r *Results) GiveUp(outcome *outcome.Outcome) error {
 	return r.bump(outcome.Word, func(score int) (int, bool) {
 		return atLeast(1)(score / 8), true
 	})
-}
-
-func newResults(db *data.Database, rd *refdata.RefData) *Results {
-	view := tview.NewTextView()
-	view.SetDynamicColors(true)
-	view.SetBorder(true)
-	view.SetTitle("flac: learn 中文")
-
-	r := &Results{
-		TextView:         view,
-		db:               db,
-		rd:               rd,
-		wordScores:       map[string]int{},
-		scoreChangedFunc: func(word string, score int) {},
-		stale:            true,
-	}
-
-	r.refresh()()
-
-	return r
 }
 
 func (r *Results) taint() {
