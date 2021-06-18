@@ -28,11 +28,9 @@ func AnswerAlts(word string, answer string) (pinyin.Alts, bool) {
 	if err != nil {
 		return nil, false
 	}
-	var words []pinyin.Tokens
 	var answerAlts pinyin.Alts
 	if len([]rune(word)) == 1 {
 		for _, tokens := range tokenses {
-			words = append(words, tokens)
 			for _, token := range tokens {
 				answerAlts = append(answerAlts, token.Alts()...)
 			}
@@ -109,6 +107,4 @@ func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.
 			}
 		}
 	}
-
-	return
 }

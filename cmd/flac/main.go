@@ -30,7 +30,9 @@ func main2() (err error) {
 		return err
 	}
 
-	db.Populate(rd.WordList)
+	if err := db.Populate(rd.WordList); err != nil {
+		return err
+	}
 
 	root := ui.New(db, rd)
 	var word string
@@ -69,7 +71,9 @@ func main2() (err error) {
 					panic(err)
 				}
 			} else {
-				root.Results.NotGood(outcome, false, &attempt)
+				if err := root.Results.NotGood(outcome, false, &attempt); err != nil {
+					panic(err)
+				}
 			}
 		}).
 		SetGiveUpFunc(func() {
@@ -93,7 +97,7 @@ func main2() (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			if e := e.(error); e != nil {
-				err = e.(error)
+				err = e
 			} else {
 				err = errors.Wrap(e, 0)
 			}

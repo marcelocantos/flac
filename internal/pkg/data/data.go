@@ -86,12 +86,12 @@ func (d *Database) Close() {
 	d.db.Close()
 }
 
-func (d *Database) Populate(wordList *refdata.WordList) error {
+func (d *Database) Populate(wordList *refdata.WordList) (e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	index, err := d.maxPos(tx)
 	if err != nil {
@@ -107,7 +107,9 @@ func (d *Database) Populate(wordList *refdata.WordList) error {
 				return err
 			}
 			index++
-			enqueueWord.Exec(index, word)
+			if _, err := enqueueWord.Exec(index, word); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -126,17 +128,15 @@ func (d *Database) Populate(wordList *refdata.WordList) error {
 			remove = append(remove, word)
 		}
 	}
-	d.removeWords(tx, remove)
-
-	return nil
+	return d.removeWords(tx, remove)
 }
 
-func (d *Database) MaxScore() (int, error) {
+func (d *Database) MaxScore() (_ int, e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.maxScore(tx)
 }
@@ -149,12 +149,12 @@ func (d *Database) maxScore(tx *sql.Tx) (int, error) {
 	return int(score.Int64), nil
 }
 
-func (d *Database) MaxPos() (int, error) {
+func (d *Database) MaxPos() (_ int, e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.maxPos(tx)
 }
@@ -167,12 +167,12 @@ func (d *Database) maxPos(tx *sql.Tx) (int, error) {
 	return int(pos.Int64), nil
 }
 
-func (d *Database) WordScore(word string) (int, error) {
+func (d *Database) WordScore(word string) (_ int, e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.wordScore(tx)(word)
 }
@@ -184,12 +184,12 @@ func (d *Database) wordScore(tx *sql.Tx) func(word string) (int, error) {
 	}
 }
 
-func (d *Database) WordPos(word string) (int, error) {
+func (d *Database) WordPos(word string) (_ int, e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return 0, err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.wordPos(tx)(word)
 }
@@ -213,12 +213,12 @@ func (d *Database) selectInt(stmt *sql.Stmt, format string, args ...interface{})
 	return int(pos.Int64), err
 }
 
-func (d *Database) WordAt(pos int) (string, error) {
+func (d *Database) WordAt(pos int) (_ string, e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return "", err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.wordAt(tx)(pos)
 }
@@ -242,12 +242,12 @@ func (d *Database) HeadWord() (string, error) {
 	return d.WordAt(0)
 }
 
-func (d *Database) UpdateScoreAndPos(word string, score, dest int) error {
+func (d *Database) UpdateScoreAndPos(word string, score, dest int) (e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	if _, err := tx.Stmt(d.updateScoreStmt).Exec(word, score); err != nil {
 		return err
@@ -258,12 +258,12 @@ func (d *Database) UpdateScoreAndPos(word string, score, dest int) error {
 	return nil
 }
 
-func (d *Database) MoveWord(word string, dest int) error {
+func (d *Database) MoveWord(word string, dest int) (e error) {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Commit()
+	defer commit(tx, &e)
 
 	return d.moveWord(tx, word, dest)
 }
@@ -327,3 +327,7 @@ func (d *Database) removeWords(tx *sql.Tx, words []string) error {
 }
 
 type ErrNotFound error
+
+func commit(tx *sql.Tx, err *error) {
+	*err = tx.Commit()
+}

@@ -67,12 +67,12 @@ func Load(
 	cache, err := fs.Create(cachePath)
 	if err != nil {
 		cache.Close()
-		fs.Remove(cachePath)
+		fs.Remove(cachePath) //nolint:errcheck
 		return err
 	}
 	defer func() {
 		if err != nil {
-			fs.Remove(cachePath)
+			fs.Remove(cachePath) //nolint:errcheck
 		}
 	}()
 	defer cache.Close()
