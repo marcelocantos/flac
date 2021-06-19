@@ -11,6 +11,7 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/data"
 	"github.com/marcelocantos/flac/internal/pkg/outcome"
+	"github.com/marcelocantos/flac/internal/pkg/pinyin"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
@@ -80,7 +81,7 @@ func (r *Results) SetScoreChangedFunc(f func(word string, score int)) *Results {
 	return r
 }
 
-func (r *Results) Good(word string, easy bool) error {
+func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	defer r.refresh()()
 
 	if err := r.bump(word, func(score int) (int, bool) {
@@ -97,6 +98,9 @@ func (r *Results) Good(word string, easy bool) error {
 	r.trimEphemeralContent()
 	r.appendGoods(word + brailleScore(score))
 	r.ClearMessages()
+	for word, entry := range o.Entries.Definitions {
+		r.appendMessage("%s 👉 %s", pinyin.MustNewWord(word).ColorString(), strings.Join(entry.Definitions, " [:gray:]/[:-:] "))
+	}
 
 	return nil
 }

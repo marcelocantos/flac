@@ -64,7 +64,7 @@ func main2() (err error) {
 			}
 			outcome := assess.Assess(word, entries, answer)
 			if outcome.Pass() {
-				if err := root.Results.Good(word, false); err != nil {
+				if err := root.Results.Good(word, outcome, false); err != nil {
 					panic(err)
 				}
 				if err := setup(); err != nil {
