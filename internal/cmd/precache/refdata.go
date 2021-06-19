@@ -55,6 +55,7 @@ func cacheRefData(
 		Dict: &refdata.CEDict{
 			Entries:                 map[string]*refdata.CEDict_Entries{},
 			TraditionalToSimplified: map[string]string{},
+			PinyinToSimplified:      map[string]*refdata.CEDict_Words{},
 		},
 	}
 
@@ -290,6 +291,12 @@ scanning:
 			}
 
 			entry.Definitions = append(entry.Definitions, strings.Split(defs, "/")...)
+			simps, has := cedict.PinyinToSimplified[word.RawString()]
+			if !has {
+				simps = &refdata.CEDict_Words{}
+				cedict.PinyinToSimplified[word.RawString()] = simps
+			}
+			simps.Words = append(simps.Words, simplified)
 		}
 	}
 
@@ -298,5 +305,16 @@ scanning:
 	}
 	sort.Strings(cedict.ValidSyllables)
 	log.Printf("Valid syllables: %v", cedict.ValidSyllables)
+
+	maxReverse := 0
+	var longestPinyinToSimplified []string
+	for _, words := range cedict.PinyinToSimplified {
+		if maxReverse < len(words.Words) {
+			maxReverse = len(words.Words)
+			longestPinyinToSimplified = words.Words
+		}
+	}
+	log.Printf("Longest reverse mapping: %v", longestPinyinToSimplified)
+
 	return scanner.Err()
 }

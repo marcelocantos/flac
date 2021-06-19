@@ -99,7 +99,7 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	r.appendGoods(word + brailleScore(score))
 	r.ClearMessages()
 	for word, entry := range o.Entries.Definitions {
-		r.appendMessage("%s 👉 %s", pinyin.MustNewWord(word).ColorString(), strings.Join(entry.Definitions, " [:gray:]/[:-:] "))
+		r.appendMessage("%s 👉 %s", pinyin.MustNewWord(word).ColorString(), strings.Join(entry.Definitions, " [gray::]/[-::] "))
 	}
 
 	return nil
@@ -126,6 +126,34 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		r.appendMessage("[:silver:]🎵[:-:] Only tone(s) need correcting!")
 	}
 	if len(o.Bad) > 0 {
+		prefix := strings.Repeat(" ", 3+2*len([]rune(o.Word))+2)
+		top := prefix
+		var corrections [][]string
+		// for i := len(o.Bad) - 1; i >= 0; i-- {
+		for _, word := range o.Bad {
+			// word := o.Bad[i]
+			wordLen := len([]rune(word.String()))
+			middle := (wordLen - 1) / 2
+			tail := wordLen - middle - 1
+			var correction string
+			if dancis, has := r.rd.Dict.PinyinToSimplified[word.RawString()]; has {
+				correction = strings.Join(dancis.Words, " ")
+			} else {
+				correction = "∅"
+			}
+			top = fmt.Sprintf("%s %s┬%s", top, strings.Repeat("─", middle), strings.Repeat("─", tail))
+			corrections = append(corrections, []string{
+				fmt.Sprintf("%s %*s╘👉 %s", prefix, middle, "", correction),
+			})
+			prefix = fmt.Sprintf("%s %s│%s", prefix, strings.Repeat(" ", middle), strings.Repeat(" ", tail))
+		}
+		r.appendMessage("[silver::]%s[-::]", top)
+		for i := len(corrections) - 1; i >= 0; i-- {
+			for _, line := range corrections[i] {
+				r.appendMessage("[silver::]%s[-::]", line)
+			}
+		}
+
 		r.appendHistory(fmt.Sprintf(
 			"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
 			o.Word, o.Bad.ColorString(), o.Bad.String()))

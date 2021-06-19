@@ -17,6 +17,7 @@ message CEDict {
 	map<string, Entries> entries  = 1;
     map<string, string> traditionalToSimplified = 3;
 	repeated string validSyllables = 4;
+    map<string, Words> pinyinToSimplified = 5;
 
     message Entries {
         map<string, Definitions> definitions = 1;
@@ -25,6 +26,10 @@ message CEDict {
 
     message Definitions {
         repeated string definitions = 1;
+    }
+
+    message Words {
+        repeated string words = 1;
     }
 
     map<string, bool> deprecated_syllables = 2;
