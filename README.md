@@ -138,6 +138,7 @@ In rough order of priority:
    should create a separate queue instead of polluting the normal queue.
 1. Auto-detect flagging performance and end the session with a suggestion to
    take a break.
+1. Test phrases.
 1. Integrate [TTS][8] and [PortAudio][9]. Uses:
    - Hints
    - Listening exercises
