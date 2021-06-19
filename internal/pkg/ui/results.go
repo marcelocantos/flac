@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -127,7 +128,14 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	}
 	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
 
-	for word, entry := range o.Entries.Definitions {
+	var words []string
+	for word := range o.Entries.Definitions {
+		words = append(words, strings.ToLower(word)+"\034"+word)
+	}
+	sort.Strings(words)
+	for _, sortWord := range words {
+		word := strings.Split(sortWord, "\034")[1]
+		entry := o.Entries.Definitions[word]
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + 4
