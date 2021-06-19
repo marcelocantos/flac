@@ -32,7 +32,7 @@ var (
 
 	// Detect traditional-only variants.
 	tradOnlyVariantRE = regexp.MustCompile(
-		`^((?:.) (.) \[(.*?)\] /)(?:old )?variant of (?:.\|)?(?P<2>.)\[(?P<3>.*?)\]/`)
+		`^((?:.) (.) \[(.*?)\] /)[^/]*(?:old )?variant of (?:.\|)?(?P<2>.)\[(?P<3>.*?)\][^/]*/`)
 
 	// Detect old variants.
 	oldVariantRE = regexp.MustCompile(
@@ -41,9 +41,6 @@ var (
 	// Detect other elidable content.
 	elidableVariantRE = regexp.MustCompile(
 		`(/)[^/]*(?:\(dialect\)|Taiwan pr\.)[^/]*/`)
-
-	// Elide traditional character from CL: defs.
-	elideCLTradHanziRE = regexp.MustCompile(`(\bCL:)\p{Han}+\|(\p{Han}+\[\w+\d\])`)
 )
 
 func cacheRefData(
@@ -181,24 +178,38 @@ func processWords(entries []wordEntry, wl *refdata.WordList) {
 }
 
 func applyVariantRE(variantRE *regexp.Regexp, line string) (string, bool) {
-	line2 := variantRE.ReplaceAllString(line, "$1$2")
-	if line != line2 {
-		if backrefRE.MatchString(variantRE.String()) {
-			groups := variantRE.FindStringSubmatch(line)
-			for i, name := range variantRE.SubexpNames() {
-				if name != "" {
-					if j, err := strconv.ParseInt(name, 10, 64); err == nil {
-						if groups[i] != groups[j] {
-							return line, true
-						}
+	line2 := variantRE.ReplaceAllString(line, "$1")
+	if line == line2 {
+		return line, true
+	}
+	if backrefRE.MatchString(variantRE.String()) {
+		groups := variantRE.FindStringSubmatch(line)
+		for i, name := range variantRE.SubexpNames() {
+			if name != "" {
+				if j, err := strconv.ParseInt(name, 10, 64); err == nil {
+					if groups[i] != groups[j] {
+						return line, true
 					}
 				}
 			}
 		}
-		if strings.HasSuffix(line2, "] /") {
+	}
+	if strings.HasSuffix(line2, "] /") {
+		return "", false
+	}
+	return line2, true
+}
+
+func applyVariantREs(line string) (string, bool) {
+	for _, variant := range []*regexp.Regexp{
+		tradOnlyVariantRE,
+		oldVariantRE,
+		elidableVariantRE,
+	} {
+		var ok bool
+		if line, ok = applyVariantRE(variant, line); !ok {
 			return "", false
 		}
-		return line2, true
 	}
 	return line, true
 }
@@ -261,17 +272,11 @@ scanning:
 				continue
 			}
 
-			for _, variant := range []*regexp.Regexp{
-				tradOnlyVariantRE,
-				oldVariantRE,
-				elidableVariantRE,
-				elideCLTradHanziRE,
-			} {
-				var ok bool
-				if line, ok = applyVariantRE(variant, line); !ok {
-					continue scanning
-				}
+			var ok bool
+			if line, ok = applyVariantREs(line); !ok {
+				continue scanning
 			}
+
 			word, err := pinyin.NewWord(match[3])
 			if err != nil {
 				return lineError(err)

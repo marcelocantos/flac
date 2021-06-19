@@ -111,16 +111,32 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	r.trimEphemeralContent()
 	r.appendGoods(word + brailleScore(score))
 	r.ClearMessages()
+
+	maxPrefixLen := 0
+	maxDigits := 0
+	for word, entry := range o.Entries.Definitions {
+		pword := pinyin.MustNewWord(word)
+		prefixLen := len([]rune(pword.String())) + 4
+		if maxPrefixLen < prefixLen {
+			maxPrefixLen = prefixLen
+		}
+		digits := len([]rune(superNumber(len(entry.Definitions) - 1)))
+		if maxDigits < digits {
+			maxDigits = digits
+		}
+	}
+	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
+
 	for word, entry := range o.Entries.Definitions {
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
-		fmt.Fprintf(&sb, "%s 👉 ", pword.ColorString())
-		prefix := "\n" + strings.Repeat(" ", len([]rune(pword.String()))+4)
+		prefixLen := len([]rune(pword.String())) + 4
+		fmt.Fprintf(&sb, "%s 👉 %s", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen))
 		for i, def := range entry.Definitions {
 			if i > 0 {
 				sb.WriteString(prefix)
 			}
-			fmt.Fprintf(&sb, "[gray::]%s[-::]%s", superNumber(i+1), def)
+			fmt.Fprintf(&sb, "[gray::]%*s[-::]%s", maxDigits, superNumber(i+1), accentPhrase(def))
 		}
 		r.appendMessage("%s", sb.String())
 	}
