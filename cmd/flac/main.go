@@ -93,16 +93,6 @@ func main2() (err error) {
 				root.Results.BlankOutMessages()
 			}
 		})
-
-	defer func() {
-		if e := recover(); e != nil {
-			if e := e.(error); e != nil {
-				err = e
-			} else {
-				err = errors.Wrap(e, 0)
-			}
-		}
-	}()
 	app := tview.NewApplication().SetRoot(root, true)
 	if err := app.Run(); err != nil {
 		return err
@@ -112,13 +102,6 @@ func main2() (err error) {
 }
 
 func main() {
-	defer func() {
-		if err, is := recover().(*errors.Error); is {
-			fmt.Fprintln(os.Stderr, err.ErrorStack())
-			fmt.Println(err)
-			os.Exit(2)
-		}
-	}()
 	if err := main2(); err != nil {
 		if err, is := err.(*errors.Error); is {
 			fmt.Fprintln(os.Stderr, err.ErrorStack())
