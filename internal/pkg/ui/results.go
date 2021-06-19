@@ -116,15 +116,6 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 
 	r.ClearMessages()
 
-	if len(o.TooShort) > 0 {
-		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString())
-	}
-	if len(o.Bad) == 0 && o.Missing > 0 {
-		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
-	}
-	if len(o.BadTones) > 0 {
-		r.appendMessage("[:silver:]🎵[:-:] Only tone(s) need correcting!")
-	}
 	if len(o.Bad) > 0 {
 		prefix := strings.Repeat(" ", 3+2*len([]rune(o.Word))+2)
 		top := prefix
@@ -157,6 +148,15 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		r.appendHistory(fmt.Sprintf(
 			"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
 			o.Word, o.Bad.ColorString(), o.Bad.String()))
+	}
+	if len(o.TooShort) > 0 {
+		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString())
+	}
+	if len(o.Bad) == 0 && o.Missing > 0 {
+		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
+	}
+	if len(o.BadTones) > 0 {
+		r.appendMessage("[:silver:]🎵[:-:] Only tone(s) need correcting!")
 	}
 
 	return nil
