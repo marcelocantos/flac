@@ -120,7 +120,6 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		prefix := strings.Repeat(" ", 3+2*len([]rune(o.Word))+2)
 		top := prefix
 		var corrections [][]string
-		// for i := len(o.Bad) - 1; i >= 0; i-- {
 		for _, word := range o.Bad {
 			// word := o.Bad[i]
 			wordLen := len([]rune(word.String()))
