@@ -94,6 +94,7 @@ func main2() (err error) {
 			}
 		})
 	app := tview.NewApplication().SetRoot(root, true)
+	root.Input.App = app
 	if err := app.Run(); err != nil {
 		return err
 	}

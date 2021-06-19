@@ -2,6 +2,7 @@ package ui
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
@@ -16,6 +17,8 @@ var (
 
 type PinyinInput struct {
 	*tview.InputField
+
+	App *tview.Application
 
 	compound bool
 
@@ -66,7 +69,18 @@ func (pi *PinyinInput) SetGiveUpFunc(giveUp func()) *PinyinInput {
 	return pi
 }
 
-func (pi *PinyinInput) accept(textToCheck string, lastChar rune) bool {
+func (pi *PinyinInput) accept(textToCheck string, lastChar rune) (ok bool) {
+	defer func() {
+		if !ok {
+			pi.SetFieldBackgroundColor(tcell.ColorRed)
+			go func() {
+				time.Sleep(50 * time.Millisecond)
+				pi.App.QueueUpdateDraw(func() {
+					pi.SetFieldBackgroundColor(tview.Styles.ContrastBackgroundColor)
+				})
+			}()
+		}
+	}()
 	m := inputRE.FindStringSubmatch(textToCheck)
 	if m == nil {
 		return false
