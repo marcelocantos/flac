@@ -47,8 +47,8 @@ func (pi *PinyinInput) SetWord(word string) {
 	pi.compound = len([]rune(word)) > 1
 }
 
-func (pi *PinyinInput) SetValidSyllables(syllables map[string]bool) *PinyinInput {
-	for s := range syllables {
+func (pi *PinyinInput) SetValidSyllables(syllables []string) *PinyinInput {
+	for _, s := range syllables {
 		// log.Println(s)
 		pi.syllables[s] = true
 		for i := 1; i <= len(s); i++ {

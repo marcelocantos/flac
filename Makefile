@@ -15,7 +15,7 @@ REFDATA_CACHE = internal/pkg/refdata/refdata.cache
 
 WORDS = refdata/words.txt
 
-GEN_FILES = $(REFDATA_CACHE) $(WORDS)
+GEN_FILES = $(REFDATA_PB) $(REFDATA_CACHE) $(WORDS)
 
 GO_SRCS = $(REFDATA_PB) $(shell find . -name '*.go')
 

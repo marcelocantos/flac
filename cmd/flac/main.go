@@ -55,7 +55,7 @@ func main2() (err error) {
 	}
 
 	root.Input.
-		SetValidSyllables(rd.Dict.Syllables).
+		SetValidSyllables(rd.Dict.ValidSyllables).
 		SetSubmitFunc(func(answer string) {
 			root.Input.SetText("")
 			entries := rd.Dict.Entries[word]

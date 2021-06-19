@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "internal/proto/refdata";
+option go_package = "internal/pkg/proto/refdata";
 
 message RefData {
     WordList wordList = 1;
@@ -15,8 +15,8 @@ message WordList {
 
 message CEDict {
 	map<string, Entries> entries  = 1;
-	map<string, bool> syllables = 2;
     map<string, string> traditionalToSimplified = 3;
+	repeated string validSyllables = 4;
     
     message Entries {
         map<string, Definitions> definitions = 1;
@@ -26,4 +26,6 @@ message CEDict {
     message Definitions {
         repeated string definitions = 1;
     }
+
+    map<string, bool> deprecated_syllables = 2;
 }

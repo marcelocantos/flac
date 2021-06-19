@@ -54,7 +54,6 @@ func cacheRefData(
 		},
 		Dict: &refdata.CEDict{
 			Entries:                 map[string]*refdata.CEDict_Entries{},
-			Syllables:               map[string]bool{},
 			TraditionalToSimplified: map[string]string{},
 		},
 	}
@@ -185,6 +184,9 @@ func loadCEDict(
 	if err != nil {
 		return err
 	}
+
+	syllables := map[string]bool{}
+
 	lineno := 0
 	scanner := bufio.NewScanner(file)
 scanning:
@@ -266,7 +268,7 @@ scanning:
 			defs := match[4]
 
 			for _, p := range word {
-				cedict.Syllables[p.Syllable()] = true
+				syllables[p.Syllable()] = true
 			}
 
 			cedict.TraditionalToSimplified[traditional] = simplified
@@ -290,5 +292,11 @@ scanning:
 			entry.Definitions = append(entry.Definitions, strings.Split(defs, "/")...)
 		}
 	}
+
+	for s := range syllables {
+		cedict.ValidSyllables = append(cedict.ValidSyllables, s)
+	}
+	sort.Strings(cedict.ValidSyllables)
+	log.Printf("Valid syllables: %v", cedict.ValidSyllables)
 	return scanner.Err()
 }
