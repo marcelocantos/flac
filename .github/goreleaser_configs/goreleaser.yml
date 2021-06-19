@@ -1,0 +1,54 @@
+project_name: flac
+env:
+  - GO111MODULE=on
+  # - GOPROXY=https://proxy.golang.org
+before:
+  hooks:
+    - go mod tidy
+
+build:
+  binary: flac
+  id: flac
+  main: ./cmd/flac
+  ldflags:
+    - -s -w -X main.Version=v{{.Version}}
+    - -X main.GitTags={{.Tag}}
+    - -X main.GitCommit={{.ShortCommit}}
+    - -X main.GitFullCommit={{.FullCommit}}
+    - -X main.BuildDate={{.Date}}
+    - -X main.BuildOS={{.Os}}
+    - -X main.BuildArch={{.Arch}}
+    - -s -w -X "main.GoVersion={{.Env.GOVERSION}}"
+  goos:
+    - darwin
+    - linux
+    - windows
+  goarch:
+    - amd64
+    - arm64
+  goarm:
+    - 7
+
+archives:
+- id: "flac"
+  builds: ['flac']
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  name_template: "{{.ProjectName}}_v{{.Version}}_{{.Os}}-{{.Arch}}"
+  files:
+    - README.md
+    - LICENSE
+
+checksum:
+  name_template: '{{.ProjectName}}_v{{.Version}}_checksums.txt'
+snapshot:
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - typo
