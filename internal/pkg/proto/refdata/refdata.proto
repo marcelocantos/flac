@@ -17,12 +17,12 @@ message CEDict {
 	map<string, Entries> entries  = 1;
     map<string, string> traditionalToSimplified = 3;
 	repeated string validSyllables = 4;
-    
+
     message Entries {
         map<string, Definitions> definitions = 1;
         string traditional = 2;
     }
-    
+
     message Definitions {
         repeated string definitions = 1;
     }
