@@ -22,20 +22,6 @@ func main2() error {
 }
 
 func main() {
-	defer func() {
-		r := recover()
-		switch err := r.(type) {
-		case nil:
-			return
-		case *errors.Error:
-			fmt.Fprintln(os.Stderr, err.ErrorStack())
-		case error:
-		default:
-			r = errors.Wrap(err, 0)
-		}
-		fmt.Printf("panic: %s\n", r)
-		os.Exit(2)
-	}()
 	if err := main2(); err != nil {
 		if err, is := err.(*errors.Error); is {
 			fmt.Fprintln(os.Stderr, err.ErrorStack())
