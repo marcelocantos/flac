@@ -329,5 +329,9 @@ func (d *Database) removeWords(tx *sql.Tx, words []string) error {
 type ErrNotFound error
 
 func commit(tx *sql.Tx, err *error) {
-	*err = tx.Commit()
+	if *err != nil {
+		tx.Rollback()
+	} else {
+		*err = tx.Commit()
+	}
 }
