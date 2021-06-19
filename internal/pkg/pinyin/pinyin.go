@@ -42,7 +42,7 @@ type Pinyin struct {
 	tone     Tone
 }
 
-func NewPinyin(raw string) (_ Pinyin, residue string, _ error) {
+func NewPinyin(raw string) (_ Pinyin, residue string, err error) {
 	groups := pinyinRE.FindStringSubmatch(raw)
 	if groups == nil ||
 		groups[1] == "" && len(groups[3]) != 1 {
@@ -55,7 +55,7 @@ func NewPinyin(raw string) (_ Pinyin, residue string, _ error) {
 
 	tone, err := strconv.Atoi(groups[3])
 	if err != nil {
-		panic(err)
+		return Pinyin{}, "", err
 	}
 
 	return newPinyinFromSyllableAndTone(syllable, tone), raw[len(groups[0]):], nil

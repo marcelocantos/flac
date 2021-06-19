@@ -71,13 +71,14 @@ func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.
 			tooShort := false
 			badTones := false
 			for def := range defMap {
-				if strings.HasPrefix(def, answer) {
+				word := pinyin.MustNewWord(def)
+				if len(alt) < len(word) && alt.RawString() == word[:len(alt)].RawString() {
 					partialDefs[def] = true
 					tooShort = true
-				} else {
+				} else if len(alt) == len(word) {
 					syllableErrors := 0
 					tonalErrors := 0
-					for i, p := range pinyin.MustNewWord(def) {
+					for i, p := range word {
 						if alt[i].Syllable() != p.Syllable() {
 							syllableErrors++
 						}
@@ -94,6 +95,7 @@ func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.
 				o.TooShort = append(o.TooShort, alt)
 			} else if badTones {
 				o.BadTones = append(o.BadTones, alt)
+				o.Bad = append(o.Bad, alt)
 			} else {
 				o.Bad = append(o.Bad, alt)
 			}
