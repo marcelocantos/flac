@@ -12,6 +12,8 @@ var (
 
 	pinyinsRE = regexp.MustCompile(
 		`(?i)(\p{Han}+)?\[((?:\w+\d\s+)*\w+\d)\]`)
+
+	classifierRE = regexp.MustCompile(`\bCL:(\p{Han}+)`)
 )
 
 func accentPhrase(phrase string) string {
@@ -21,5 +23,6 @@ func accentPhrase(phrase string) string {
 		m[2] = pinyin.MustNewWord(m[2]).ColorString()
 		return fmt.Sprintf("%s[%s]", m[1], m[2])
 	})
+	phrase = classifierRE.ReplaceAllString(phrase, "🆑$1")
 	return phrase
 }

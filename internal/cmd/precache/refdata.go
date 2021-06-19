@@ -331,5 +331,18 @@ scanning:
 	}
 	log.Printf("Longest reverse mapping: %v", longestPinyinToSimplified)
 
+	// Move CL:... defs to the end.
+	for _, entry := range cedict.Entries {
+		for _, defs := range entry.Definitions {
+			for i := len(defs.Definitions) - 1; i >= 0; i-- {
+				def := defs.Definitions[i]
+				if strings.HasPrefix(def, "CL:") {
+					defs.Definitions = append(defs.Definitions[:i], defs.Definitions[i+1:]...)
+					defs.Definitions = append(defs.Definitions, def)
+				}
+			}
+		}
+	}
+
 	return scanner.Err()
 }
