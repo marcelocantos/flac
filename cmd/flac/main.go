@@ -90,7 +90,7 @@ func main2() (err error) {
 		}).
 		SetChangedFunc(func(text string) {
 			if text != "" {
-				root.Results.BlankOutMessages()
+				root.Results.ClearMessages()
 			}
 		})
 	app := tview.NewApplication().SetRoot(root, true)

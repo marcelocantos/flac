@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/rivo/tview"
@@ -15,7 +16,10 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
-var brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
+var (
+	brailleBars = []string{"", "⡀", "⡄", "⡆", "⡇", "⣇", "⣧", "⣷"}
+	superDigits = []rune{'⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'}
+)
 
 func logscore(score int) float64 {
 	return math.Log(float64(score)) / math.Log(2)
@@ -27,6 +31,15 @@ func brailleScore(score int) string {
 	}
 	s := int(logscore(score))
 	return strings.Repeat("⣿", s/8) + brailleBars[s%8]
+}
+
+func superNumber(n int) string {
+	s := strconv.Itoa(n)
+	var sb strings.Builder
+	for _, d := range s {
+		sb.WriteRune(superDigits[d-'0'])
+	}
+	return sb.String()
 }
 
 func atLeast(min int) func(i int) int {
@@ -99,7 +112,17 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	r.appendGoods(word + brailleScore(score))
 	r.ClearMessages()
 	for word, entry := range o.Entries.Definitions {
-		r.appendMessage("%s 👉 %s", pinyin.MustNewWord(word).ColorString(), strings.Join(entry.Definitions, " [gray::]/[-::] "))
+		var sb strings.Builder
+		pword := pinyin.MustNewWord(word)
+		fmt.Fprintf(&sb, "%s 👉 ", pword.ColorString())
+		prefix := "\n" + strings.Repeat(" ", len([]rune(pword.String()))+4)
+		for i, def := range entry.Definitions {
+			if i > 0 {
+				sb.WriteString(prefix)
+			}
+			fmt.Fprintf(&sb, "[gray::]%s[-::]%s", superNumber(i+1), def)
+		}
+		r.appendMessage("%s", sb.String())
 	}
 
 	return nil
@@ -304,16 +327,6 @@ func (r *Results) ClearMessages() {
 	defer r.refresh()()
 
 	r.clearMessages()
-}
-
-// BlankOutMessages sets all messages to the empty string rather than simply
-// removing them. This clears them out without causing the view to scroll.
-func (r *Results) BlankOutMessages() {
-	defer r.refresh()()
-
-	if r.msgs.blankOut() {
-		r.taint()
-	}
 }
 
 func (r *Results) setMessages(messages ...string) {
