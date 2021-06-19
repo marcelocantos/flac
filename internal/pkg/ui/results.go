@@ -119,7 +119,7 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
 	}
 	if len(o.BadTones) > 0 {
-		r.appendMessage("[:gray:]🎹[:-:-] Only tone(s) need correcting!")
+		r.appendMessage("[:silver:]🎵[:-:] Only tone(s) need correcting!")
 	}
 	if len(o.Bad) > 0 {
 		r.appendHistory(fmt.Sprintf(
