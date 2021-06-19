@@ -184,7 +184,7 @@ func (r *Results) refresh() func() {
 		}
 		if r.stale {
 			r.SetText("")
-			fmt.Fprintf(r, "%s你好，一起学中文吧！\n", strings.Repeat("\n", 999))
+			fmt.Fprintf(r, "%s欢迎来到flac，一起学中文吧！\n", strings.Repeat("\n", 999))
 
 			// Abuse history as a preallocated buffer for output.
 			output := append(r.history, r.goodsReport()...)
