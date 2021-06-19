@@ -131,12 +131,12 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + 4
-		fmt.Fprintf(&sb, "%s 👉 %s", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen))
+		fmt.Fprintf(&sb, "%s%s 👉 ", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen))
 		for i, def := range entry.Definitions {
 			if i > 0 {
 				sb.WriteString(prefix)
 			}
-			fmt.Fprintf(&sb, "[gray::]%*s[-::]%s", maxDigits, superNumber(i+1), accentPhrase(def))
+			fmt.Fprintf(&sb, "[#909090::]%*s[-::]%s", maxDigits, superNumber(i+1), accentPhrase(def))
 		}
 		r.appendMessage("%s", sb.String())
 	}
