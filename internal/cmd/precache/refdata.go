@@ -20,6 +20,8 @@ import (
 )
 
 var (
+	backrefRE = regexp.MustCompile(`\(\?P<\d>`)
+
 	hanziRE = regexp.MustCompile(`^\p{Han}+`)
 
 	cedictDefRE = regexp.MustCompile(
@@ -39,6 +41,9 @@ var (
 	// Detect other elidable content.
 	elidableVariantRE = regexp.MustCompile(
 		`(/)[^/]*(?:\(dialect\)|Taiwan pr\.)[^/]*/`)
+
+	// Elide traditional character from CL: defs.
+	elideCLTradHanziRE = regexp.MustCompile(`(\bCL:)\p{Han}+\|(\p{Han}+\[\w+\d\])`)
 )
 
 func cacheRefData(
@@ -175,6 +180,29 @@ func processWords(entries []wordEntry, wl *refdata.WordList) {
 	}
 }
 
+func applyVariantRE(variantRE *regexp.Regexp, line string) (string, bool) {
+	line2 := variantRE.ReplaceAllString(line, "$1$2")
+	if line != line2 {
+		if backrefRE.MatchString(variantRE.String()) {
+			groups := variantRE.FindStringSubmatch(line)
+			for i, name := range variantRE.SubexpNames() {
+				if name != "" {
+					if j, err := strconv.ParseInt(name, 10, 64); err == nil {
+						if groups[i] != groups[j] {
+							return line, true
+						}
+					}
+				}
+			}
+		}
+		if strings.HasSuffix(line2, "] /") {
+			return "", false
+		}
+		return line2, true
+	}
+	return line, true
+}
+
 func loadCEDict(
 	fs afero.Fs,
 	path string,
@@ -233,33 +261,15 @@ scanning:
 				continue
 			}
 
-		variants:
-			for _, variant := range []struct {
-				re       *regexp.Regexp
-				backrefs bool
-			}{
-				{tradOnlyVariantRE, true},
-				{oldVariantRE, false},
-				{elidableVariantRE, false},
+			for _, variant := range []*regexp.Regexp{
+				tradOnlyVariantRE,
+				oldVariantRE,
+				elidableVariantRE,
+				elideCLTradHanziRE,
 			} {
-				line2 := variant.re.ReplaceAllString(line, "$1")
-				if line != line2 {
-					if variant.backrefs {
-						groups := variant.re.FindStringSubmatch(line)
-						for i, name := range variant.re.SubexpNames() {
-							if name != "" {
-								if j, err := strconv.ParseInt(name, 10, 64); err == nil {
-									if groups[i] != groups[j] {
-										continue variants
-									}
-								}
-							}
-						}
-					}
-					if strings.HasSuffix(line2, "] /") {
-						continue scanning
-					}
-					line = line2
+				var ok bool
+				if line, ok = applyVariantRE(variant, line); !ok {
+					continue scanning
 				}
 			}
 			word, err := pinyin.NewWord(match[3])
