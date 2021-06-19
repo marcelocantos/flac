@@ -198,7 +198,7 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 	if len(o.TooShort) > 0 {
 		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString())
 	}
-	if len(o.Bad) == 0 && o.Missing > 0 {
+	if len(o.Bad) == 0 && o.Missing > len(o.TooShort)+len(o.BadTones) {
 		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
 	}
 	if len(o.BadTones) > 0 {
