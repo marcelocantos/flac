@@ -69,16 +69,20 @@ func (pi *AnswerInput) SetGiveUpFunc(giveUp func()) *AnswerInput {
 	return pi
 }
 
+func (pi *AnswerInput) FlashBackground() {
+	pi.SetFieldBackgroundColor(tcell.ColorRed)
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		pi.App.QueueUpdateDraw(func() {
+			pi.SetFieldBackgroundColor(tview.Styles.ContrastBackgroundColor)
+		})
+	}()
+}
+
 func (pi *AnswerInput) accept(textToCheck string, lastChar rune) (ok bool) {
 	defer func() {
 		if !ok {
-			pi.SetFieldBackgroundColor(tcell.ColorRed)
-			go func() {
-				time.Sleep(50 * time.Millisecond)
-				pi.App.QueueUpdateDraw(func() {
-					pi.SetFieldBackgroundColor(tview.Styles.ContrastBackgroundColor)
-				})
-			}()
+			pi.FlashBackground()
 		}
 	}()
 	m := inputRE.FindStringSubmatch(textToCheck)
@@ -110,6 +114,8 @@ func (pi *AnswerInput) done(key tcell.Key) {
 		m := inputRE.FindStringSubmatch(text)
 		if _, err := pinyin.WordAlts(m[1]); err == nil {
 			pi.submitFunc(text)
+		} else {
+			pi.FlashBackground()
 		}
 	case tcell.KeyEscape:
 		pi.giveUpFunc()
