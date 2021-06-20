@@ -22,29 +22,48 @@ var (
 func decorateDefinitions(defs []string) []string {
 	ret := make([]string, 0, len(defs))
 
-	toPrefix := "to "
-	tos := make([]string, 0, len(defs))
-	firstTo := -1
+	type group struct {
+		prefix string
+		suffix string
+		defs   []string
+		first  int
+	}
+	groups := []*group{
+		{prefix: "to ", first: -1},
+		{prefix: "abbr. for ", first: -1},
+		{prefix: "(grammatical equivalent of ", suffix: ")", first: -1},
+	}
 
+defs:
 	for i, def := range defs {
-		if strings.HasPrefix(def, toPrefix) {
-			tos = append(tos, strings.TrimPrefix(def, toPrefix))
-			if firstTo == -1 {
-				ret = append(ret, "") // placeholder
-				firstTo = i
+		for _, g := range groups {
+			if strings.HasPrefix(def, g.prefix) && strings.HasSuffix(def, g.suffix) {
+				g.defs = append(g.defs,
+					strings.TrimSuffix(strings.TrimPrefix(def, g.prefix), g.suffix))
+				if g.first == -1 {
+					ret = append(ret, "") // placeholder
+					g.first = i
+				}
+				continue defs
 			}
-		} else {
-			ret = append(ret, decorateDefinition(def))
+		}
+		ret = append(ret, def)
+	}
+	for _, g := range groups {
+		if g.first != -1 {
+			if len(g.defs) == 1 {
+				ret[g.first] = g.prefix + g.defs[0] + g.suffix
+			} else {
+				ret[g.first] = fmt.Sprintf("%s[#888888::]⟨[-::]%s[#888888::]⟩[-::]%s",
+					g.prefix, strings.Join(g.defs, "[#888888::],[-::]\035"), g.suffix)
+			}
 		}
 	}
-	if firstTo != -1 {
-		if len(tos) == 1 {
-			ret[firstTo] = toPrefix + tos[0]
-		} else {
-			ret[firstTo] = fmt.Sprintf("%s[#888888::]⟨[-::]%s[#888888::]⟩[-::]",
-				toPrefix, strings.Join(tos, "[#888888::],[-::]\035"))
-		}
+
+	for i, def := range ret {
+		ret[i] = decorateDefinition(def)
 	}
+
 	return ret
 }
 
