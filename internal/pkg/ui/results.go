@@ -169,15 +169,15 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 				for j, part := range parts {
 					if j > 0 {
 						num++
-						fmt.Fprintf(&sb, "[#888888::]%s[-::]", superNumber(num))
+						fmt.Fprintf(&sb, "[#228899::]%s[-::]", superNumber(num))
 					}
-					sb.WriteString(part)
+					fmt.Fprintf(&sb, "[silver::]%s[-::]", part)
 				}
 			} else {
 				if !strings.HasPrefix(def, "🆑:") {
-					fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
+					fmt.Fprintf(&sb, "[#228899::]%*s[-::]", maxDigits, superNumber(num))
 				}
-				sb.WriteString(def)
+				fmt.Fprintf(&sb, "[silver::]%s[-::]", def)
 			}
 		}
 		r.appendMessage("%s", sb.String())

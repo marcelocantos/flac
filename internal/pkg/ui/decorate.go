@@ -55,8 +55,8 @@ defs:
 	for _, g := range groups {
 		if g.first != -1 {
 			if len(g.defs) > 1 {
-				ret[g.first] = fmt.Sprintf("%s[#888888::]\035[-::]%s[#888888::][-::]%s",
-					g.prefix, strings.Join(g.defs, "[#888888::],[-::]\035"), g.suffix)
+				ret[g.first] = fmt.Sprintf("%s\035[silver::]%s[-::]%s",
+					g.prefix, strings.Join(g.defs, "[#666666::],[-::]\035"), g.suffix)
 			}
 		}
 	}
