@@ -44,8 +44,8 @@ func main2() (err error) {
 		if err != nil {
 			return err
 		}
-		root.Input.SetWord(word)
-		root.Input.SetText("")
+		root.Answer.SetWord(word)
+		root.Answer.SetText("")
 		attempt = 1
 		return nil
 	}
@@ -54,10 +54,10 @@ func main2() (err error) {
 		return err
 	}
 
-	root.Input.
+	root.Answer.
 		SetValidSyllables(rd.Dict.ValidSyllables).
 		SetSubmitFunc(func(answer string) {
-			root.Input.SetText("")
+			root.Answer.SetText("")
 			entries := rd.Dict.Entries[word]
 			if entries == nil {
 				panic(errors.Errorf("no entry for %s", word))
@@ -94,7 +94,7 @@ func main2() (err error) {
 			}
 		})
 	app := tview.NewApplication().SetRoot(root, true)
-	root.Input.App = app
+	root.Answer.App = app
 	if err := app.Run(); err != nil {
 		return err
 	}

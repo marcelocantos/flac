@@ -11,7 +11,7 @@ type Root struct {
 	*tview.Flex
 
 	Results *Results
-	Input   *PinyinInput
+	Answer  *AnswerInput
 }
 
 func New(db *data.Database, rd *refdata.RefData) *Root {
@@ -27,6 +27,6 @@ func New(db *data.Database, rd *refdata.RefData) *Root {
 	return &Root{
 		Flex:    flex,
 		Results: results,
-		Input:   input,
+		Answer:  input,
 	}
 }

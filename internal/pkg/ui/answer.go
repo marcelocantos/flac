@@ -15,7 +15,7 @@ var (
 	inputCharRE = regexp.MustCompile(`([a-z]+)[1-5]+`)
 )
 
-type PinyinInput struct {
+type AnswerInput struct {
 	*tview.InputField
 
 	App *tview.Application
@@ -29,8 +29,8 @@ type PinyinInput struct {
 	giveUpFunc func()
 }
 
-func newPinyinInput() *PinyinInput {
-	input := &PinyinInput{
+func newPinyinInput() *AnswerInput {
+	input := &AnswerInput{
 		InputField: tview.NewInputField(),
 		syllables:  map[string]bool{},
 		prefixes:   map[string]bool{},
@@ -42,12 +42,12 @@ func newPinyinInput() *PinyinInput {
 	return input
 }
 
-func (pi *PinyinInput) SetWord(word string) {
+func (pi *AnswerInput) SetWord(word string) {
 	pi.SetLabel(word + ":")
 	pi.compound = len([]rune(word)) > 1
 }
 
-func (pi *PinyinInput) SetValidSyllables(syllables []string) *PinyinInput {
+func (pi *AnswerInput) SetValidSyllables(syllables []string) *AnswerInput {
 	for _, s := range syllables {
 		// log.Println(s)
 		pi.syllables[s] = true
@@ -59,17 +59,17 @@ func (pi *PinyinInput) SetValidSyllables(syllables []string) *PinyinInput {
 	return pi
 }
 
-func (pi *PinyinInput) SetSubmitFunc(submit func(answer string)) *PinyinInput {
+func (pi *AnswerInput) SetSubmitFunc(submit func(answer string)) *AnswerInput {
 	pi.submitFunc = submit
 	return pi
 }
 
-func (pi *PinyinInput) SetGiveUpFunc(giveUp func()) *PinyinInput {
+func (pi *AnswerInput) SetGiveUpFunc(giveUp func()) *AnswerInput {
 	pi.giveUpFunc = giveUp
 	return pi
 }
 
-func (pi *PinyinInput) accept(textToCheck string, lastChar rune) (ok bool) {
+func (pi *AnswerInput) accept(textToCheck string, lastChar rune) (ok bool) {
 	defer func() {
 		if !ok {
 			pi.SetFieldBackgroundColor(tcell.ColorRed)
@@ -103,7 +103,7 @@ func (pi *PinyinInput) accept(textToCheck string, lastChar rune) (ok bool) {
 	return true
 }
 
-func (pi *PinyinInput) done(key tcell.Key) {
+func (pi *AnswerInput) done(key tcell.Key) {
 	switch key {
 	case tcell.KeyEnter:
 		text := pi.GetText()
