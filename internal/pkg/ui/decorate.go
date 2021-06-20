@@ -29,31 +29,30 @@ func decorateDefinitions(defs []string) []string {
 		first  int
 	}
 	groups := []*group{
-		{prefix: "to ", first: -1},
-		{prefix: "abbr. for ", first: -1},
-		{prefix: "(grammatical equivalent of ", suffix: ")", first: -1},
+		{first: -1, prefix: "to "},
+		{first: -1, prefix: "abbr. for "},
+		{first: -1, prefix: "classifier for "},
+		{first: -1, prefix: "(grammatical equivalent of ", suffix: ")"},
 	}
 
 defs:
-	for i, def := range defs {
+	for _, def := range defs {
 		for _, g := range groups {
 			if strings.HasPrefix(def, g.prefix) && strings.HasSuffix(def, g.suffix) {
 				g.defs = append(g.defs,
 					strings.TrimSuffix(strings.TrimPrefix(def, g.prefix), g.suffix))
 				if g.first == -1 {
-					ret = append(ret, "") // placeholder
-					g.first = i
+					g.first = len(ret)
+				} else {
+					continue defs
 				}
-				continue defs
 			}
 		}
 		ret = append(ret, def)
 	}
 	for _, g := range groups {
 		if g.first != -1 {
-			if len(g.defs) == 1 {
-				ret[g.first] = g.prefix + g.defs[0] + g.suffix
-			} else {
+			if len(g.defs) > 1 {
 				ret[g.first] = fmt.Sprintf("%s[#888888::]⟨[-::]%s[#888888::]⟩[-::]%s",
 					g.prefix, strings.Join(g.defs, "[#888888::],[-::]\035"), g.suffix)
 			}

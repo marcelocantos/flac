@@ -117,24 +117,35 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	const leaderLen = 4
 	maxPrefixLen := 0
 	maxDigits := 0
-	for word, entry := range o.Entries.Definitions {
-		pword := pinyin.MustNewWord(word)
-		prefixLen := len([]rune(pword.String())) + leaderLen
-		if maxPrefixLen < prefixLen {
-			maxPrefixLen = prefixLen
-		}
-		digits := len([]rune(superNumber(len(entry.Definitions))))
-		if maxDigits < digits {
-			maxDigits = digits
-		}
-	}
-	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
 
 	var words []string
 	for word := range o.Entries.Definitions {
 		words = append(words, strings.ToLower(word)+"\034"+word)
 	}
 	sort.Strings(words)
+
+	for _, sortWord := range words {
+		word := strings.Split(sortWord, "\034")[1]
+		entry := o.Entries.Definitions[word]
+		pword := pinyin.MustNewWord(word)
+		prefixLen := len([]rune(pword.String())) + leaderLen
+		if maxPrefixLen < prefixLen {
+			maxPrefixLen = prefixLen
+		}
+		num := 1
+		// TODO: Avoid second call to decorateDefinitions below.
+		for _, def := range decorateDefinitions(entry.Definitions) {
+			digits := len([]rune(superNumber(num + 1)))
+			if !strings.HasPrefix(def, "🆑:") {
+				if maxDigits < digits {
+					maxDigits = digits
+				}
+			}
+			num += 1 + strings.Count(def, "\035")
+		}
+	}
+	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
+
 	for _, sortWord := range words {
 		word := strings.Split(sortWord, "\034")[1]
 		entry := o.Entries.Definitions[word]

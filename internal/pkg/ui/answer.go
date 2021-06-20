@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -42,8 +43,8 @@ func newPinyinInput() *AnswerInput {
 	return input
 }
 
-func (pi *AnswerInput) SetWord(word string) {
-	pi.SetLabel(word + ":")
+func (pi *AnswerInput) SetWord(word string, score int) {
+	pi.SetLabel(fmt.Sprintf("%s[#999900::]%s[-::] ", word, brailleScore(score)))
 	pi.compound = len([]rune(word)) > 1
 }
 

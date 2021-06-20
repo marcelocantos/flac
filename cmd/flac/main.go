@@ -44,7 +44,15 @@ func main2() (err error) {
 		if err != nil {
 			return err
 		}
-		root.Answer.SetWord(word)
+		score, err := db.WordScore(word)
+		switch err := err.(type) {
+		case data.ErrNotFound:
+			score = 0
+		case nil:
+		default:
+			return err
+		}
+		root.Answer.SetWord(word, score)
 		root.Answer.SetText("")
 		attempt = 1
 		return nil
