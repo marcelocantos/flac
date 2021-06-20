@@ -123,14 +123,9 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		if maxPrefixLen < prefixLen {
 			maxPrefixLen = prefixLen
 		}
-		for i, def := range entry.Definitions {
-			digits := len([]rune(superNumber(i + 1)))
-			if strings.HasPrefix(def, "CL:") {
-				digits = 2
-			}
-			if maxDigits < digits {
-				maxDigits = digits
-			}
+		digits := len([]rune(superNumber(len(entry.Definitions))))
+		if maxDigits < digits {
+			maxDigits = digits
 		}
 	}
 	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
@@ -153,15 +148,13 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 			if i > 0 {
 				sb.WriteString(prefix)
 			}
-			if strings.HasPrefix(def, "🆑:") {
-				fmt.Fprintf(&sb, "%*s", maxDigits-2, "")
-			} else {
+			if !strings.HasPrefix(def, "🆑:") {
 				fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
 			}
 			for j, part := range strings.Split(def, "\035") {
 				if j > 0 {
 					num++
-					fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
+					fmt.Fprintf(&sb, "[#888888::]%s[-::]", superNumber(num))
 				}
 				sb.WriteString(part)
 			}

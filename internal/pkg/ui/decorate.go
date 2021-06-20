@@ -42,7 +42,7 @@ func decorateDefinitions(defs []string) []string {
 			ret[firstTo] = toPrefix + tos[0]
 		} else {
 			ret[firstTo] = fmt.Sprintf("%s[#888888::]⟨[-::]%s[#888888::]⟩[-::]",
-				toPrefix, strings.Join(tos, "[#888888::],[-::] \035"))
+				toPrefix, strings.Join(tos, "[#888888::],[-::]\035"))
 		}
 	}
 	return ret
@@ -56,6 +56,6 @@ func decorateDefinition(phrase string) string {
 		return fmt.Sprintf("%s[%s]", m[1], m[2])
 	})
 	phrase = classifierRE.ReplaceAllString(phrase, "🆑:$1")
-	phrase = classifierForRE.ReplaceAllString(phrase, "🆑 ➤")
+	phrase = classifierForRE.ReplaceAllString(phrase, "🆑➤")
 	return phrase
 }
