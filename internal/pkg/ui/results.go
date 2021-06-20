@@ -156,7 +156,7 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
-		fmt.Fprintf(&sb, "%s%s%s", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen), leader)
+		fmt.Fprintf(&sb, "%s%s%s", pword.ColorString(""), strings.Repeat(" ", maxPrefixLen-prefixLen), leader)
 		num := 0
 		for i, def := range decorateDefinitions(entry.Definitions) {
 			num++
@@ -202,7 +202,6 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		top := prefix
 		var corrections [][]string
 		for _, word := range o.Bad {
-			// word := o.Bad[i]
 			wordLen := len([]rune(word.String()))
 			middle := (wordLen - 1) / 2
 			tail := wordLen - middle - 1
@@ -218,7 +217,6 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 			})
 			prefix = fmt.Sprintf("%s %s│%s", prefix, strings.Repeat(" ", middle), strings.Repeat(" ", tail))
 		}
-		r.appendMessage("[silver::]%s[-::]", top)
 		for i := len(corrections) - 1; i >= 0; i-- {
 			for _, line := range corrections[i] {
 				r.appendMessage("[silver::]%s[-::]", line)
@@ -227,10 +225,10 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 
 		r.appendHistory(fmt.Sprintf(
 			"❌ %s ≠ %s\034❌ [#999999::]%[1]s ≠ [#999999::d]%[3]s[-::-]",
-			o.Word, o.Bad.ColorString(), o.Bad.String()))
+			o.Word, o.Bad.ColorString("u"), o.Bad.String()))
 	}
 	if len(o.TooShort) > 0 {
-		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString())
+		r.appendMessage("⚠️  Missing characters: %s...", o.TooShort.ColorString(""))
 	}
 	if len(o.Bad) == 0 && o.Missing > len(o.TooShort)+len(o.BadTones) {
 		r.appendMessage("⚠️  Missing alternative%s[-::]", pluralS(o.Missing))
@@ -303,9 +301,7 @@ func (r *Results) goodsReport() []string {
 	if len(r.goods) == 0 {
 		return nil
 	}
-	return []string{
-		fmt.Sprintf("%s", strings.Join(r.goods, " ")),
-	}
+	return []string{strings.Join(r.goods, " ")}
 }
 
 func (r *Results) appendHistory(lines ...string) {

@@ -28,7 +28,7 @@ func (o *Outcome) Fail() bool {
 }
 
 func (o *Outcome) Correction() string {
-	return fmt.Sprintf("%s = %s", o.Word, o.WordAlts().ColorString())
+	return fmt.Sprintf("%s = %s", o.Word, o.WordAlts().ColorString(""))
 }
 
 func (o *Outcome) WordAlts() pinyin.Alts {

@@ -19,11 +19,11 @@ func (t Tone) String() string {
 
 var (
 	toneColors = map[Tone]string{
-		1: "[red::b]",
-		2: "[green::b]",
-		3: "[blue::b]",
-		4: "[purple::b]",
-		5: "[black::b]",
+		1: "red",
+		2: "green",
+		3: "blue",
+		4: "purple",
+		5: "black",
 	}
 
 	vowels = map[rune][]rune{
@@ -138,8 +138,8 @@ func (p Pinyin) Color() string {
 	return toneColors[p.Tone()]
 }
 
-func (p Pinyin) ColorString() string {
-	return fmt.Sprintf("%s%s[-::-]", p.Color(), p)
+func (p Pinyin) ColorString(flags string) string {
+	return fmt.Sprintf("[%s::b%s]%s[-::-]", p.Color(), flags, p)
 }
 
 func (p Pinyin) RawString() string {

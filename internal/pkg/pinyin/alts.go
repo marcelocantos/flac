@@ -1,26 +1,33 @@
 package pinyin
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Alts []Word
 
 func (a Alts) String() string {
-	return a.string(func(w Word) string { return w.String() })
+	return a.string("", func(w Word) string { return w.String() })
 }
 
-func (a Alts) ColorString() string {
-	return a.string(func(w Word) string { return w.ColorString() })
+func (a Alts) ColorString(flags string) string {
+	return a.string(flags, func(w Word) string { return w.ColorString(flags) })
 }
 
 func (a Alts) RawString() string {
-	return a.string(func(w Word) string { return w.RawString() })
+	return a.string("", func(w Word) string { return w.RawString() })
 }
 
-func (a Alts) string(s func(Word) string) string {
+func (a Alts) string(flags string, s func(Word) string) string {
 	var sb strings.Builder
 	for i, w := range a {
 		if i > 0 {
-			sb.WriteString("/")
+			if flags == "" {
+				sb.WriteByte('/')
+			} else {
+				fmt.Fprintf(&sb, "[::%s]/[::-]", flags)
+			}
 		}
 		sb.WriteString(s(w))
 	}

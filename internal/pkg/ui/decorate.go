@@ -35,6 +35,7 @@ func decorateDefinitions(defs []string) []string {
 		{first: -1, prefix: "abbr. for "},
 		{first: -1, prefix: "classifier for "},
 		{first: -1, prefix: "(grammatical equivalent of ", suffix: ")"},
+		{first: -1, prefix: "(indicates ", suffix: ")"},
 	}
 
 defs:
@@ -74,7 +75,7 @@ func decorateDefinition(phrase string) string {
 	phrase = tradcharRE.ReplaceAllString(phrase, "$1")
 	phrase = pinyinsRE.ReplaceAllStringFunc(phrase, func(s string) string {
 		m := pinyinsRE.FindStringSubmatch(s)
-		m[2] = pinyin.MustNewWord(m[2]).ColorString()
+		m[2] = pinyin.MustNewWord(m[2]).ColorString("")
 		return fmt.Sprintf("%s[%s]", m[1], m[2])
 	})
 	phrase = classifierRE.ReplaceAllString(phrase, "🆑:$1")
