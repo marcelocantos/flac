@@ -147,16 +147,24 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
 		fmt.Fprintf(&sb, "%s%s%s", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen), leader)
-		for i, def := range entry.Definitions {
+		num := 0
+		for i, def := range decorateDefinitions(entry.Definitions) {
+			num++
 			if i > 0 {
 				sb.WriteString(prefix)
 			}
-			if strings.HasPrefix(def, "CL:") {
+			if strings.HasPrefix(def, "🆑:") {
 				fmt.Fprintf(&sb, "%*s", maxDigits-2, "")
 			} else {
-				fmt.Fprintf(&sb, "[#909090::]%*s[-::]", maxDigits, superNumber(i+1))
+				fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
 			}
-			sb.WriteString(decoratePhrase(def))
+			for j, part := range strings.Split(def, "\035") {
+				if j > 0 {
+					num++
+					fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
+				}
+				sb.WriteString(part)
+			}
 		}
 		r.appendMessage("%s", sb.String())
 	}
