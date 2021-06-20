@@ -113,11 +113,13 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	r.appendGoods(word + brailleScore(score))
 	r.ClearMessages()
 
+	const leader = " 👉 "
+	const leaderLen = 4
 	maxPrefixLen := 0
 	maxDigits := 0
 	for word, entry := range o.Entries.Definitions {
 		pword := pinyin.MustNewWord(word)
-		prefixLen := len([]rune(pword.String())) + 4
+		prefixLen := len([]rune(pword.String())) + leaderLen
 		if maxPrefixLen < prefixLen {
 			maxPrefixLen = prefixLen
 		}
@@ -143,8 +145,8 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		entry := o.Entries.Definitions[word]
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
-		prefixLen := len([]rune(pword.String())) + 4
-		fmt.Fprintf(&sb, "%s%s 👉 ", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen))
+		prefixLen := len([]rune(pword.String())) + leaderLen
+		fmt.Fprintf(&sb, "%s%s%s", pword.ColorString(), strings.Repeat(" ", maxPrefixLen-prefixLen), leader)
 		for i, def := range entry.Definitions {
 			if i > 0 {
 				sb.WriteString(prefix)
@@ -154,7 +156,7 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 			} else {
 				fmt.Fprintf(&sb, "[#909090::]%*s[-::]", maxDigits, superNumber(i+1))
 			}
-			sb.WriteString(accentPhrase(def))
+			sb.WriteString(decoratePhrase(def))
 		}
 		r.appendMessage("%s", sb.String())
 	}

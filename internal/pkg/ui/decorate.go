@@ -14,9 +14,11 @@ var (
 		`(?i)(\p{Han}+)?\[((?:\w+\d\s+)*\w+\d)\]`)
 
 	classifierRE = regexp.MustCompile(`\bCL:(\p{Han}+)`)
+
+	classifierForRE = regexp.MustCompile(`\bclassifier for\b`)
 )
 
-func accentPhrase(phrase string) string {
+func decoratePhrase(phrase string) string {
 	phrase = tradcharRE.ReplaceAllString(phrase, "$1")
 	phrase = pinyinsRE.ReplaceAllStringFunc(phrase, func(s string) string {
 		m := pinyinsRE.FindStringSubmatch(s)
@@ -24,5 +26,6 @@ func accentPhrase(phrase string) string {
 		return fmt.Sprintf("%s[%s]", m[1], m[2])
 	})
 	phrase = classifierRE.ReplaceAllString(phrase, "🆑$1")
+	phrase = classifierForRE.ReplaceAllString(phrase, "🆑➤")
 	return phrase
 }

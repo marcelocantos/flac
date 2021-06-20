@@ -331,14 +331,20 @@ scanning:
 	}
 	log.Printf("Longest reverse mapping: %v", longestPinyinToSimplified)
 
-	// Move CL:... defs to the end.
-	for _, entry := range cedict.Entries {
-		for _, defs := range entry.Definitions {
-			for i := len(defs.Definitions) - 1; i >= 0; i-- {
-				def := defs.Definitions[i]
-				if strings.HasPrefix(def, "CL:") {
-					defs.Definitions = append(defs.Definitions[:i], defs.Definitions[i+1:]...)
-					defs.Definitions = append(defs.Definitions, def)
+	// Move "CL:..." and "...classifier for..." to the end.
+	classifierForRE := regexp.MustCompile(`\bclassifier for `)
+	for _, pred := range []func(string) bool{
+		func(def string) bool { return classifierForRE.MatchString(def) },
+		func(def string) bool { return strings.Contains(def, "CL:") },
+	} {
+		for _, entry := range cedict.Entries {
+			for _, defs := range entry.Definitions {
+				for i := len(defs.Definitions) - 1; i >= 0; i-- {
+					def := defs.Definitions[i]
+					if pred(def) {
+						defs.Definitions = append(defs.Definitions[:i], defs.Definitions[i+1:]...)
+						defs.Definitions = append(defs.Definitions, def)
+					}
 				}
 			}
 		}
