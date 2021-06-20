@@ -56,7 +56,6 @@ func (pi *AnswerInput) SetValidSyllables(syllables []string) *AnswerInput {
 			pi.prefixes[s[:i]] = true
 		}
 	}
-	// panic("")
 	return pi
 }
 

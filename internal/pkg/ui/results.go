@@ -110,7 +110,7 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	}
 
 	r.trimEphemeralContent()
-	r.appendGoods(word + brailleScore(score))
+	r.appendGoods(fmt.Sprintf("[green::b]%s[#009900::]%s[-::-]", word, brailleScore(score)))
 	r.ClearMessages()
 
 	const leader = " 👉 "
@@ -135,13 +135,17 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 		num := 1
 		// TODO: Avoid second call to decorateDefinitions below.
 		for _, def := range decorateDefinitions(entry.Definitions) {
-			digits := len([]rune(superNumber(num + 1)))
-			if !strings.HasPrefix(def, "🆑:") {
-				if maxDigits < digits {
-					maxDigits = digits
+			if parts := strings.Count(def, "\035"); parts > 0 {
+				num += parts
+			} else {
+				digits := len([]rune(superNumber(num)))
+				if !strings.HasPrefix(def, "🆑:") {
+					if maxDigits < digits {
+						maxDigits = digits
+					}
 				}
+				num++
 			}
-			num += 1 + strings.Count(def, "\035")
 		}
 	}
 	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
@@ -159,15 +163,21 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 			if i > 0 {
 				sb.WriteString(prefix)
 			}
-			if !strings.HasPrefix(def, "🆑:") {
-				fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
-			}
-			for j, part := range strings.Split(def, "\035") {
-				if j > 0 {
-					num++
-					fmt.Fprintf(&sb, "[#888888::]%s[-::]", superNumber(num))
+			if parts := strings.Split(def, "\035"); len(parts) > 1 {
+				fmt.Fprintf(&sb, "%*s", maxDigits, "")
+				num--
+				for j, part := range parts {
+					if j > 0 {
+						num++
+						fmt.Fprintf(&sb, "[#888888::]%s[-::]", superNumber(num))
+					}
+					sb.WriteString(part)
 				}
-				sb.WriteString(part)
+			} else {
+				if !strings.HasPrefix(def, "🆑:") {
+					fmt.Fprintf(&sb, "[#888888::]%*s[-::]", maxDigits, superNumber(num))
+				}
+				sb.WriteString(def)
 			}
 		}
 		r.appendMessage("%s", sb.String())
@@ -294,7 +304,7 @@ func (r *Results) goodsReport() []string {
 		return nil
 	}
 	return []string{
-		fmt.Sprintf("[green::b]%s[-::-]", strings.Join(r.goods, " ")),
+		fmt.Sprintf("%s", strings.Join(r.goods, " ")),
 	}
 }
 

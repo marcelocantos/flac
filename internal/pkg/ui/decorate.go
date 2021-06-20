@@ -9,6 +9,8 @@ import (
 )
 
 var (
+	taiwanRE = regexp.MustCompile(`Taiwan pr. `)
+
 	tradcharRE = regexp.MustCompile(`(?:\p{Han}+\|)(\p{Han}+)`)
 
 	pinyinsRE = regexp.MustCompile(
@@ -53,7 +55,7 @@ defs:
 	for _, g := range groups {
 		if g.first != -1 {
 			if len(g.defs) > 1 {
-				ret[g.first] = fmt.Sprintf("%s[#888888::]⟨[-::]%s[#888888::]⟩[-::]%s",
+				ret[g.first] = fmt.Sprintf("%s[#888888::]\035[-::]%s[#888888::][-::]%s",
 					g.prefix, strings.Join(g.defs, "[#888888::],[-::]\035"), g.suffix)
 			}
 		}
@@ -67,6 +69,8 @@ defs:
 }
 
 func decorateDefinition(phrase string) string {
+	phrase = strings.ReplaceAll(phrase, "'", "’")
+	phrase = taiwanRE.ReplaceAllString(phrase, "🇹🇼")
 	phrase = tradcharRE.ReplaceAllString(phrase, "$1")
 	phrase = pinyinsRE.ReplaceAllStringFunc(phrase, func(s string) string {
 		m := pinyinsRE.FindStringSubmatch(s)
