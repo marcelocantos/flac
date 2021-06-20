@@ -93,13 +93,6 @@ func (pi *AnswerInput) accept(textToCheck string, lastChar rune) (ok bool) {
 		return false
 	}
 	for _, m := range inputCharRE.FindAllStringSubmatch(textToCheck, -1) {
-		alts, err := (pinyin.WordAlts(m[0]))
-		if err != nil {
-			return false
-		}
-		if pi.compound && alts.Len() > 1 {
-			return false
-		}
 		if !pi.syllables[m[1]] {
 			return false
 		}

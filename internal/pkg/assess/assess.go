@@ -37,18 +37,24 @@ func AnswerAlts(word string, answer string) (pinyin.Alts, bool) {
 		}
 	} else {
 		for _, tokens := range tokenses {
-			var word pinyin.Word
+			altses := []pinyin.Alts{}
 			for _, token := range tokens {
-				alts := token.Alts()
-				if len(alts) != 1 {
-					return nil, false
-				}
-				word = append(word, alts[0]...)
+				altses = append(altses, token.Alts())
 			}
-			answerAlts = append(answerAlts, word)
+			answerAlts = answerProduct(answerAlts, altses, pinyin.Word{})
 		}
 	}
 	return answerAlts, true
+}
+
+func answerProduct(answerAlts pinyin.Alts, altses []pinyin.Alts, word pinyin.Word) pinyin.Alts {
+	if len(altses) == 0 {
+		return append(answerAlts, word)
+	}
+	for _, alt := range altses[0] {
+		answerAlts = answerProduct(answerAlts, altses[1:], append(word, alt[0]))
+	}
+	return answerAlts
 }
 
 func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.Outcome) {
