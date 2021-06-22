@@ -18,14 +18,23 @@ func New(db *data.Database, rd *refdata.RefData) *Root {
 	results := newResults(db, rd)
 	results.ScrollToEnd()
 
-	input := newPinyinInput()
+	input := newAnswerInput()
 
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+	keyboardHelp := " [orange::]❲?❳[-::]reveal [orange::]❲esc❳[-::]exit "
+	keyboardHints := tview.NewTextView().
+		SetDynamicColors(true).
+		SetText(keyboardHelp)
+
+	inputFlex := tview.NewFlex().
+		AddItem(input, 0, 1, true).
+		AddItem(keyboardHints, tview.TaggedStringWidth(keyboardHelp), 0, true)
+
+	mainFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(results, 0, 1, false).
-		AddItem(input, 1, 0, true)
+		AddItem(inputFlex, 1, 0, true)
 
 	return &Root{
-		Flex:    flex,
+		Flex:    mainFlex,
 		Results: results,
 		Answer:  input,
 	}

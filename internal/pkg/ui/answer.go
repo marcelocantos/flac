@@ -31,7 +31,7 @@ type AnswerInput struct {
 	submitFunc func(answer string)
 }
 
-func newPinyinInput() *AnswerInput {
+func newAnswerInput() *AnswerInput {
 	input := &AnswerInput{
 		InputField: tview.NewInputField(),
 		syllables:  map[string]bool{},
