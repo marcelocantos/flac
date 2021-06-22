@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -16,7 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 )
 
 var (
@@ -51,14 +53,14 @@ func cacheRefData(
 	dictPaths []string,
 	dest string,
 ) error {
-	result := &refdata.RefData{
-		WordList: &refdata.WordList{
+	result := &refdata_pb.RefData{
+		WordList: &refdata_pb.WordList{
 			Frequencies: map[string]int64{},
 		},
-		Dict: &refdata.CEDict{
-			Entries:                 map[string]*refdata.CEDict_Entries{},
+		Dict: &refdata_pb.CEDict{
+			Entries:                 map[string]*refdata_pb.CEDict_Entries{},
 			TraditionalToSimplified: map[string]string{},
-			PinyinToSimplified:      map[string]*refdata.CEDict_Words{},
+			PinyinToSimplified:      map[string]*refdata_pb.CEDict_Words{},
 		},
 	}
 
@@ -103,19 +105,25 @@ func cacheRefData(
 
 	processWords(words, result.WordList)
 
-	out, err := fs.Create(dest)
+	var writer io.WriteCloser
+	writer, err = fs.Create(dest)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer writer.Close()
+
 	data, err := proto.Marshal(result)
 	_ = data
 	if err != nil {
 		return err
 	}
-	w := lz4.NewWriter(out)
-	defer w.Close()
-	if _, err = w.Write(data); err != nil {
+	if os.Getenv("FLAC_NO_COMPRESS") == "" {
+		writer = lz4.NewWriter(writer)
+		defer writer.Close()
+	} else {
+		writer.Write([]byte("NOCOMPRESS:"))
+	}
+	if _, err = writer.Write(data); err != nil {
 		return err
 	}
 
@@ -168,7 +176,7 @@ func loadWords(fs afero.Fs, path string, limit int) (map[string]wordEntry, error
 	return words, scanner.Err()
 }
 
-func processWords(entries []wordEntry, wl *refdata.WordList) {
+func processWords(entries []wordEntry, wl *refdata_pb.WordList) {
 	for _, entry := range entries {
 		wl.Words = append(wl.Words, entry.word)
 		wl.Frequencies[entry.word] = int64(entry.frequency)
@@ -199,6 +207,10 @@ func applyVariantRE(variantRE *regexp.Regexp, line string) (string, bool) {
 }
 
 func applyVariantREs(line string) (string, bool) {
+	interest := strings.Contains(line, `old variant of 和[he2]`)
+	if interest {
+		log.Print(line)
+	}
 	for _, variant := range []*regexp.Regexp{
 		tradOnlyVariantRE,
 		oldVariantRE,
@@ -206,8 +218,14 @@ func applyVariantREs(line string) (string, bool) {
 	} {
 		var ok bool
 		if line, ok = applyVariantRE(variant, line); !ok {
+			if interest {
+				log.Print(line, false)
+			}
 			return "", false
 		}
+	}
+	if interest {
+		log.Print(line, true)
 	}
 	return line, true
 }
@@ -216,7 +234,7 @@ func loadCEDict(
 	fs afero.Fs,
 	path string,
 	wm map[string]wordEntry,
-	cedict *refdata.CEDict,
+	cedict *refdata_pb.CEDict,
 ) error {
 	file, err := fs.Open(path)
 	if err != nil {
@@ -235,6 +253,11 @@ scanning:
 				return errors.WrapPrefix(err, fmt.Sprintf("%d: %s", lineno, line), 0)
 			}
 
+			var ok bool
+			if line, ok = applyVariantREs(line); !ok {
+				continue scanning
+			}
+
 			if match := cedictRemovalRE.FindStringSubmatch(line); match != nil {
 				log.Print(match)
 				simplified := match[2]
@@ -244,10 +267,10 @@ scanning:
 						return lineError(err)
 					}
 					answer := word.RawString()
-					if _, has := entries.Definitions[answer]; has {
+					if _, has := entries.Entries[answer]; has {
 						log.Printf("  Removing %s", answer)
-						delete(entries.Definitions, answer)
-						if len(entries.Definitions) == 0 {
+						delete(entries.Entries, answer)
+						if len(entries.Entries) == 0 {
 							log.Printf("  Removing %s", simplified)
 							delete(cedict.Entries, simplified)
 						}
@@ -267,11 +290,6 @@ scanning:
 			traditional := match[1]
 			simplified := match[2]
 
-			var ok bool
-			if line, ok = applyVariantREs(line); !ok {
-				continue scanning
-			}
-
 			word, err := pinyin.NewWord(match[3])
 			if err != nil {
 				// log.Print(errors.WrapPrefix(err, fmt.Sprintf("%d: %s", lineno, match[3]), 0))
@@ -287,24 +305,24 @@ scanning:
 
 			entries, has := cedict.Entries[simplified]
 			if !has {
-				entries = &refdata.CEDict_Entries{
-					Definitions: map[string]*refdata.CEDict_Definitions{},
+				entries = &refdata_pb.CEDict_Entries{
+					Entries: map[string]*refdata_pb.CEDict_Definitions{},
 				}
 				cedict.Entries[simplified] = entries
 			}
 			entries.Traditional = traditional
 
 			answer := word.RawString()
-			entry, has := entries.Definitions[answer]
+			entry, has := entries.Entries[answer]
 			if !has {
-				entry = &refdata.CEDict_Definitions{}
-				entries.Definitions[answer] = entry
+				entry = &refdata_pb.CEDict_Definitions{}
+				entries.Entries[answer] = entry
 			}
 
 			entry.Definitions = append(entry.Definitions, strings.Split(defs, "/")...)
 			simps, has := cedict.PinyinToSimplified[word.RawString()]
 			if !has {
-				simps = &refdata.CEDict_Words{}
+				simps = &refdata_pb.CEDict_Words{}
 				cedict.PinyinToSimplified[word.RawString()] = simps
 			}
 			simps.Words = append(simps.Words, simplified)
@@ -339,7 +357,7 @@ scanning:
 		func(def string) bool { return strings.Contains(def, "CL:") },
 	} {
 		for _, entry := range cedict.Entries {
-			for _, defs := range entry.Definitions {
+			for _, defs := range entry.Entries {
 				for i := len(defs.Definitions) - 1; i >= 0; i-- {
 					def := defs.Definitions[i]
 					if pred(def) {

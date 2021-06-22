@@ -5,12 +5,12 @@ import (
 	"sort"
 
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 )
 
 type Outcome struct {
 	Word     string
-	Entries  *refdata.CEDict_Entries
+	Entries  *refdata_pb.CEDict_Entries
 	Good     pinyin.Alts
 	Bad      pinyin.Alts
 	TooShort pinyin.Alts
@@ -32,8 +32,8 @@ func (o *Outcome) Correction() string {
 }
 
 func (o *Outcome) WordAlts() pinyin.Alts {
-	wordAlts := make(pinyin.Alts, 0, len(o.Entries.Definitions))
-	for raw := range o.Entries.Definitions {
+	wordAlts := make(pinyin.Alts, 0, len(o.Entries.Entries))
+	for raw := range o.Entries.Entries {
 		word, err := pinyin.NewWord(raw)
 		if err != nil {
 			panic(err)

@@ -4,7 +4,7 @@ all : flac
 empty :=
 space := $(empty) $(empty)
 
-REFDATA_PB = internal/pkg/proto/refdata/refdata.pb.go
+REFDATA_PB = internal/pkg/proto/refdata_pb/refdata.pb.go
 
 # addenda.txt must come second, so its removals get applied.
 REFDATA_SRCS = \

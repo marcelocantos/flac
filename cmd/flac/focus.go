@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/go-errors/errors"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 	wordSep = regexp.MustCompile(`[\s,，]+`)
 )
 
-func parsePhrase(phrase string, rd *refdata.RefData) ([]string, error) {
+func parsePhrase(phrase string, rd *refdata_pb.RefData) ([]string, error) {
 	phrase = nonHanRE.ReplaceAllString(phrase, "")
 
 	var lengths []map[string]bool

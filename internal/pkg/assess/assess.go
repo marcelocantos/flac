@@ -5,12 +5,12 @@ import (
 
 	"github.com/marcelocantos/flac/internal/pkg/outcome"
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 )
 
 func Assess(
 	word string,
-	entries *refdata.CEDict_Entries,
+	entries *refdata_pb.CEDict_Entries,
 	answer string,
 ) *outcome.Outcome {
 	o := &outcome.Outcome{
@@ -57,14 +57,18 @@ func answerProduct(answerAlts pinyin.Alts, altses []pinyin.Alts, word pinyin.Wor
 	return answerAlts
 }
 
-func assess(entries *refdata.CEDict_Entries, answerAlts pinyin.Alts, o *outcome.Outcome) {
+func assess(
+	entries *refdata_pb.CEDict_Entries,
+	answerAlts pinyin.Alts,
+	o *outcome.Outcome,
+) {
 	answerMap := map[string]pinyin.Word{}
 	for _, alt := range answerAlts {
 		answerMap[alt.RawString()] = alt
 	}
 
 	defMap := map[string]bool{}
-	for def := range entries.Definitions {
+	for def := range entries.Entries {
 		defMap[strings.ToLower(def)] = true
 	}
 

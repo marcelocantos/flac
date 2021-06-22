@@ -14,22 +14,22 @@ func TestDecoratePhrase(t *testing.T) {
 	}
 	assert.Equal(t,
 		c("🆑:个[<purple(gè)>]"),
-		decorateDefinition("CL:個|个[ge4]"))
+		DecorateDefinition("CL:個|个[ge4]"))
 	assert.Equal(t,
 		c("🆑:个[<purple(gè)>],种[<blue(zhǒng)>]"),
-		decorateDefinition("CL:個|个[ge4],種|种[zhong3]"))
+		DecorateDefinition("CL:個|个[ge4],種|种[zhong3]"))
 	assert.Equal(t,
 		c("🆑:门[<green(mén)>],种[<blue(zhǒng)>],项[<purple(xiàng)>]"),
-		decorateDefinition("CL:門|门[men2],種|种[zhong3],項|项[xiang4]"))
+		DecorateDefinition("CL:門|门[men2],種|种[zhong3],項|项[xiang4]"))
 
 	// classifier for ...
 	assert.Equal(t,
 		c("令 令 [<blue(lǐng)>] /🆑➤ a ream of paper/"),
-		decorateDefinition("令 令 [ling3] /classifier for a ream of paper/"))
+		DecorateDefinition("令 令 [ling3] /classifier for a ream of paper/"))
 	assert.Equal(t,
 		c("味 味 [<purple(wèi)>] /taste/smell/(fig.) (noun suffix) feel/"+
 			"quality/sense/(TCM) 🆑➤ ingredients of a medicine prescription/"),
-		decorateDefinition(
+		DecorateDefinition(
 			"味 味 [wei4] /taste/smell/(fig.) (noun suffix) feel/quality/sense/"+
 				"(TCM) classifier for ingredients of a medicine prescription/"))
 }

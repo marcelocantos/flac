@@ -63,13 +63,13 @@ defs:
 	}
 
 	for i, def := range ret {
-		ret[i] = decorateDefinition(def)
+		ret[i] = DecorateDefinition(def)
 	}
 
 	return ret
 }
 
-func decorateDefinition(phrase string) string {
+func DecorateDefinition(phrase string) string {
 	phrase = strings.ReplaceAll(phrase, "'", "’")
 	phrase = taiwanRE.ReplaceAllString(phrase, "🇹🇼  ")
 	phrase = tradcharRE.ReplaceAllString(phrase, "$1")

@@ -45,9 +45,11 @@ func newAnswerInput() *AnswerInput {
 	return input
 }
 
-func (pi *AnswerInput) SetWord(word string, score int) {
-	pi.SetLabel(fmt.Sprintf("%s[#999900::]%s[-::] ", word, brailleScore(score)))
+func (pi *AnswerInput) SetWord(word string, score int) int {
+	label := fmt.Sprintf("%s[#999900::]%s[-::] ", word, brailleScore(score))
+	pi.SetLabel(label)
 	pi.compound = len([]rune(word)) > 1
+	return tview.TaggedStringWidth(label)
 }
 
 func (pi *AnswerInput) SetValidSyllables(syllables []string) *AnswerInput {

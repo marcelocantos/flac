@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "internal/pkg/proto/refdata";
+option go_package = "internal/pkg/proto/refdata_pb";
 
 message RefData {
     WordList wordList = 1;
@@ -19,7 +19,7 @@ message CEDict {
     map<string, Words> pinyinToSimplified = 5;
 
     message Entries {
-        map<string, Definitions> definitions = 1;
+        map<string, Definitions> entries = 1;
         string traditional = 2;
     }
 

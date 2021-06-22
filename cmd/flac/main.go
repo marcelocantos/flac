@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/go-errors/errors"
 	"github.com/rivo/tview"
@@ -11,6 +12,7 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
 	"github.com/marcelocantos/flac/internal/pkg/outcome"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 	"github.com/marcelocantos/flac/internal/pkg/refdata"
 	"github.com/marcelocantos/flac/internal/pkg/ui"
 )
@@ -61,6 +63,8 @@ func main2() (err error) {
 
 	root := ui.New(db, rd)
 	var word string
+	var variantDef string
+	var entries *refdata_pb.CEDict_Entries
 	var attempt int
 
 	setup := func() error {
@@ -77,8 +81,13 @@ func main2() (err error) {
 		default:
 			return err
 		}
-		root.Answer.SetWord(word, score)
+		labelWidth := root.Answer.SetWord(word, score)
+
+		variantDef, entries = refdata.RandomDefinition(rd.Dict.Entries[word])
+		root.Hint.SetText(strings.Repeat(" ", labelWidth) + ui.DecorateDefinition(variantDef))
+
 		root.Answer.SetText("")
+
 		attempt = 1
 		return nil
 	}
@@ -95,7 +104,7 @@ func main2() (err error) {
 		SetGiveUpFunc(func() {
 			outcome := &outcome.Outcome{
 				Word:    word,
-				Entries: rd.Dict.Entries[word],
+				Entries: entries,
 			}
 			if outcome.Entries == nil {
 				panic("no entry for " + word)
@@ -106,10 +115,6 @@ func main2() (err error) {
 		}).
 		SetSubmitFunc(func(answer string) {
 			root.Answer.SetText("")
-			entries := rd.Dict.Entries[word]
-			if entries == nil {
-				panic(errors.Errorf("no entry for %s", word))
-			}
 			outcome := assess.Assess(word, entries, answer)
 			if outcome.Pass() {
 				if err := root.Results.Good(word, outcome, false); err != nil {

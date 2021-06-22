@@ -14,7 +14,7 @@ import (
 	"github.com/marcelocantos/flac/internal/pkg/data"
 	"github.com/marcelocantos/flac/internal/pkg/outcome"
 	"github.com/marcelocantos/flac/internal/pkg/pinyin"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
+	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 )
 
 var (
@@ -56,7 +56,7 @@ type Results struct {
 	*tview.TextView
 
 	db *data.Database
-	rd *refdata.RefData
+	rd *refdata_pb.RefData
 
 	wordScores map[string]int
 
@@ -70,11 +70,11 @@ type Results struct {
 	scoreChangedFunc func(word string, score int)
 }
 
-func newResults(db *data.Database, rd *refdata.RefData) *Results {
+func newResults(db *data.Database, rd *refdata_pb.RefData) *Results {
 	view := tview.NewTextView()
 	view.SetDynamicColors(true)
 	view.SetBorder(true)
-	view.SetTitle("flac: learn 中文")
+	view.SetTitle("┤flac: learn 中文├")
 
 	r := &Results{
 		TextView:         view,
@@ -119,14 +119,14 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	maxDigits := 0
 
 	var words []string
-	for word := range o.Entries.Definitions {
+	for word := range o.Entries.Entries {
 		words = append(words, strings.ToLower(word)+"\034"+word)
 	}
 	sort.Strings(words)
 
 	for _, sortWord := range words {
 		word := strings.Split(sortWord, "\034")[1]
-		entry := o.Entries.Definitions[word]
+		entry := o.Entries.Entries[word]
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
 		if maxPrefixLen < prefixLen {
@@ -152,7 +152,7 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 
 	for _, sortWord := range words {
 		word := strings.Split(sortWord, "\034")[1]
-		entry := o.Entries.Definitions[word]
+		entry := o.Entries.Entries[word]
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
