@@ -71,7 +71,7 @@ defs:
 
 func decorateDefinition(phrase string) string {
 	phrase = strings.ReplaceAll(phrase, "'", "’")
-	phrase = taiwanRE.ReplaceAllString(phrase, "🇹🇼")
+	phrase = taiwanRE.ReplaceAllString(phrase, "🇹🇼  ")
 	phrase = tradcharRE.ReplaceAllString(phrase, "$1")
 	phrase = pinyinsRE.ReplaceAllStringFunc(phrase, func(s string) string {
 		m := pinyinsRE.FindStringSubmatch(s)
