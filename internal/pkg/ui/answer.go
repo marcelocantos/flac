@@ -26,8 +26,9 @@ type AnswerInput struct {
 	syllables map[string]bool
 	prefixes  map[string]bool
 
-	submitFunc func(answer string)
+	exitFunc   func()
 	giveUpFunc func()
+	submitFunc func(answer string)
 }
 
 func newPinyinInput() *AnswerInput {
@@ -35,8 +36,9 @@ func newPinyinInput() *AnswerInput {
 		InputField: tview.NewInputField(),
 		syllables:  map[string]bool{},
 		prefixes:   map[string]bool{},
-		submitFunc: func(string) {},
+		exitFunc:   func() {},
 		giveUpFunc: func() {},
+		submitFunc: func(string) {},
 	}
 	input.SetAcceptanceFunc(input.accept)
 	input.SetDoneFunc(input.done)
@@ -59,13 +61,18 @@ func (pi *AnswerInput) SetValidSyllables(syllables []string) *AnswerInput {
 	return pi
 }
 
-func (pi *AnswerInput) SetSubmitFunc(submit func(answer string)) *AnswerInput {
-	pi.submitFunc = submit
+func (pi *AnswerInput) SetExitFunc(exitFunc func()) *AnswerInput {
+	pi.exitFunc = exitFunc
 	return pi
 }
 
 func (pi *AnswerInput) SetGiveUpFunc(giveUp func()) *AnswerInput {
 	pi.giveUpFunc = giveUp
+	return pi
+}
+
+func (pi *AnswerInput) SetSubmitFunc(submit func(answer string)) *AnswerInput {
+	pi.submitFunc = submit
 	return pi
 }
 
@@ -80,11 +87,18 @@ func (pi *AnswerInput) FlashBackground() {
 }
 
 func (pi *AnswerInput) accept(textToCheck string, lastChar rune) (ok bool) {
+	if textToCheck == "?" {
+		pi.SetText("")
+		pi.giveUpFunc()
+		return false
+	}
+
 	defer func() {
 		if !ok {
 			pi.FlashBackground()
 		}
 	}()
+
 	m := inputRE.FindStringSubmatch(textToCheck)
 	if m == nil {
 		return false
@@ -111,6 +125,6 @@ func (pi *AnswerInput) done(key tcell.Key) {
 			pi.FlashBackground()
 		}
 	case tcell.KeyEscape:
-		pi.giveUpFunc()
+		pi.exitFunc()
 	}
 }

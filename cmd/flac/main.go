@@ -89,6 +89,21 @@ func main2() (err error) {
 
 	root.Answer.
 		SetValidSyllables(rd.Dict.ValidSyllables).
+		SetExitFunc(func() {
+			panic(stopError{})
+		}).
+		SetGiveUpFunc(func() {
+			outcome := &outcome.Outcome{
+				Word:    word,
+				Entries: rd.Dict.Entries[word],
+			}
+			if outcome.Entries == nil {
+				panic("no entry for " + word)
+			}
+			if err := root.Results.GiveUp(outcome); err != nil {
+				panic(err)
+			}
+		}).
 		SetSubmitFunc(func(answer string) {
 			root.Answer.SetText("")
 			entries := rd.Dict.Entries[word]
@@ -109,18 +124,6 @@ func main2() (err error) {
 				}
 			}
 		}).
-		SetGiveUpFunc(func() {
-			outcome := &outcome.Outcome{
-				Word:    word,
-				Entries: rd.Dict.Entries[word],
-			}
-			if outcome.Entries == nil {
-				panic("no entry for " + word)
-			}
-			if err := root.Results.GiveUp(outcome); err != nil {
-				panic(err)
-			}
-		}).
 		SetChangedFunc(func(text string) {
 			if text != "" {
 				root.Results.ClearMessages()
@@ -135,7 +138,16 @@ func main2() (err error) {
 	return nil
 }
 
+type stopError struct{}
+
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, is := r.(stopError); !is {
+				panic(r)
+			}
+		}
+	}()
 	if err := main2(); err != nil {
 		if err, is := err.(*errors.Error); is {
 			fmt.Fprintln(os.Stderr, err.ErrorStack())
