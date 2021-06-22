@@ -247,7 +247,7 @@ func (r *Results) GiveUp(outcome *outcome.Outcome) error {
 
 	r.setMessages(outcome.Correction())
 	return r.bump(outcome.Word, func(score int) (int, bool) {
-		return atLeast(1)(score / 8), true
+		return atLeast(1)(score / 8), false
 	})
 }
 
