@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -15,6 +16,15 @@ import (
 )
 
 func main2() (err error) {
+	phrase := flag.String("phrase", "", "Focus this session on words from a phrase")
+	words := flag.String("words", "", "Focus this session on words from a comma-separated list")
+	flag.Parse()
+
+	if *phrase != "" && *words != "" {
+		fmt.Println("-phrase and -words are mutually exclusive")
+		os.Exit(1)
+	}
+
 	if err = hackTerminfo(); err != nil {
 		return err
 	}
@@ -30,7 +40,22 @@ func main2() (err error) {
 		return err
 	}
 
-	if err := db.Populate(rd.WordList); err != nil {
+	var focus string
+	var focusWords []string
+	if *phrase != "" {
+		focus = "phrase:" + *phrase
+		focusWords, err = parsePhrase(*phrase, rd.WordList.Words)
+		if err != nil {
+			return err
+		}
+	} else if *words != "" {
+		focus = "words:" + *words
+		focusWords = parseWords(*words)
+	} else {
+		focusWords = rd.WordList.Words
+	}
+
+	if err := db.Populate(focus, focusWords); err != nil {
 		return err
 	}
 

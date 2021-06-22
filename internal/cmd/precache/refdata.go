@@ -52,7 +52,6 @@ func cacheRefData(
 	result := &refdata.RefData{
 		WordList: &refdata.WordList{
 			Frequencies: map[string]int64{},
-			Positions:   map[string]int64{},
 		},
 		Dict: &refdata.CEDict{
 			Entries:                 map[string]*refdata.CEDict_Entries{},
@@ -170,10 +169,9 @@ func loadWords(fs afero.Fs, path string) (map[string]wordEntry, error) {
 }
 
 func processWords(entries []wordEntry, wl *refdata.WordList) {
-	for i, entry := range entries {
+	for _, entry := range entries {
 		wl.Words = append(wl.Words, entry.word)
 		wl.Frequencies[entry.word] = int64(entry.frequency)
-		wl.Positions[entry.word] = int64(i)
 	}
 }
 
