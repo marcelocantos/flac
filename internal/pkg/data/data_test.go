@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/marcelocantos/flac/internal/pkg/data"
-	"github.com/marcelocantos/flac/internal/pkg/proto/refdata"
 )
 
 var words = []string{
@@ -17,17 +16,6 @@ var words = []string{
 	"住", "与", "将", "日", "我们", "好", "月", "会", "大", "来", "还", "等", "而",
 	"地", "自己", "后", "两", "一", "被", "没有", "去", "但", "从", "很", "给", "时",
 	"以", "中国",
-}
-
-func prepareWordList(words []string) *refdata.WordList {
-	wordList := &refdata.WordList{
-		Words:     words,
-		Positions: map[string]int64{},
-	}
-	for i, w := range words {
-		wordList.Positions[w] = int64(i)
-	}
-	return wordList
 }
 
 func TestDatabasePopulate(t *testing.T) {
@@ -42,7 +30,7 @@ func TestDatabasePopulate(t *testing.T) {
 		}
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			slice := words[:n]
-			require.NoError(t, d.Populate(prepareWordList(slice)))
+			require.NoError(t, d.Populate("", slice))
 
 			max, err := d.MaxPos()
 			require.NoError(t, err)
@@ -166,7 +154,7 @@ func TestDatabaseMoveMissingWord(t *testing.T) {
 func prepareDatabase(t *testing.T) *data.Database {
 	d, err := data.NewDatabase(":memory:")
 	require.NoError(t, err)
-	require.NoError(t, d.Populate(prepareWordList(words)))
+	require.NoError(t, d.Populate("", words))
 	return d
 }
 

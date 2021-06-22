@@ -13,13 +13,13 @@ func TestDecoratePhrase(t *testing.T) {
 		return colorRE.ReplaceAllString(s, "[$1::b]$2[-::-]")
 	}
 	assert.Equal(t,
-		c("🆑个[<purple(gè)>]"),
+		c("🆑:个[<purple(gè)>]"),
 		decorateDefinition("CL:個|个[ge4]"))
 	assert.Equal(t,
-		c("🆑个[<purple(gè)>],种[<blue(zhǒng)>]"),
+		c("🆑:个[<purple(gè)>],种[<blue(zhǒng)>]"),
 		decorateDefinition("CL:個|个[ge4],種|种[zhong3]"))
 	assert.Equal(t,
-		c("🆑门[<green(mén)>],种[<blue(zhǒng)>],项[<purple(xiàng)>]"),
+		c("🆑:门[<green(mén)>],种[<blue(zhǒng)>],项[<purple(xiàng)>]"),
 		decorateDefinition("CL:門|门[men2],種|种[zhong3],項|项[xiang4]"))
 
 	// classifier for ...
