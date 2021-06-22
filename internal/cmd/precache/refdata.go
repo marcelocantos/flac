@@ -318,14 +318,19 @@ scanning:
 	// log.Printf("Valid syllables: %v", cedict.ValidSyllables)
 
 	maxReverse := 0
+	var longestPinyinToSimplifiedPinyin string
 	var longestPinyinToSimplified []string
-	for _, words := range cedict.PinyinToSimplified {
+	for word, words := range cedict.PinyinToSimplified {
 		if maxReverse < len(words.Words) {
 			maxReverse = len(words.Words)
+			longestPinyinToSimplifiedPinyin = word
 			longestPinyinToSimplified = words.Words
 		}
 	}
-	log.Printf("Longest reverse mapping: %v", longestPinyinToSimplified)
+	log.Printf("Longest reverse mapping: %v 👉 (%d) %v",
+		longestPinyinToSimplifiedPinyin,
+		len(longestPinyinToSimplified),
+		longestPinyinToSimplified)
 
 	// Move "CL:..." and "...classifier for..." to the end.
 	classifierForRE := regexp.MustCompile(`\bclassifier for `)
