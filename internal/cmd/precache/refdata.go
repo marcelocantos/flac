@@ -32,7 +32,9 @@ var (
 
 	// Detect traditional-only variants.
 	tradOnlyVariantRE = regexp.MustCompile(
-		`^((?:\p{Han}+) (\p{Han}+) \[(.*?)\] /)[^/]*(?:old )?variant of (?:\p{Han}+\|)?(?P<2>\p{Han}+)\[(?P<3>.*?)\][^/]*/`)
+		`^((?:\p{Han}+) (\p{Han}+) \[(.*?)\] /)` +
+			`[^/]*(?:[^/]*\bvariant of|also written|see(?: also)?) ` +
+			`(?:\p{Han}+\|)?(?P<2>\p{Han}+)\[(?P<3>.*?)\][^/]*/`)
 
 	// Detect old variants.
 	oldVariantRE = regexp.MustCompile(
@@ -60,7 +62,7 @@ func cacheRefData(
 		},
 	}
 
-	wordEntryMap, err := loadWords(fs, wordsPath)
+	wordEntryMap, err := loadWords(fs, wordsPath, 10000)
 	if err != nil {
 		return err
 	}
@@ -83,12 +85,12 @@ func cacheRefData(
 			}
 		}
 	}
-	if len(traditional) > 0 {
-		log.Printf("Eliding traditional words: %s", strings.Join(traditional, "  "))
-	}
-	if len(missing) > 0 {
-		log.Printf("Eliding words with no definitions: %s", strings.Join(missing, "  "))
-	}
+	// if len(traditional) > 0 {
+	// 	log.Printf("Eliding traditional words: %s", strings.Join(traditional, "  "))
+	// }
+	// if len(missing) > 0 {
+	// 	log.Printf("Eliding words with no definitions: %s", strings.Join(missing, "  "))
+	// }
 	for _, word := range append(traditional, missing...) {
 		delete(wordEntryMap, word)
 	}
@@ -141,16 +143,14 @@ func (e wordEntries) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
 
-func loadWords(fs afero.Fs, path string) (map[string]wordEntry, error) {
+func loadWords(fs afero.Fs, path string, limit int) (map[string]wordEntry, error) {
 	wordsFile, err := fs.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	i := -1
 	scanner := bufio.NewScanner(bom.NewReader(wordsFile))
 	words := map[string]wordEntry{}
-	for scanner.Scan() {
-		i++
+	for i := 0; scanner.Scan() && (limit == -1 || i < limit); i++ {
 		if line := scanner.Text(); line != "" {
 			parts := strings.SplitN(line, "\t", 2)
 			word := parts[0]
@@ -266,9 +266,6 @@ scanning:
 			}
 			traditional := match[1]
 			simplified := match[2]
-			if _, has := wm[simplified]; !has {
-				continue
-			}
 
 			var ok bool
 			if line, ok = applyVariantREs(line); !ok {
@@ -277,7 +274,8 @@ scanning:
 
 			word, err := pinyin.NewWord(match[3])
 			if err != nil {
-				return lineError(err)
+				// log.Print(errors.WrapPrefix(err, fmt.Sprintf("%d: %s", lineno, match[3]), 0))
+				continue
 			}
 			defs := match[4]
 
@@ -317,7 +315,7 @@ scanning:
 		cedict.ValidSyllables = append(cedict.ValidSyllables, s)
 	}
 	sort.Strings(cedict.ValidSyllables)
-	log.Printf("Valid syllables: %v", cedict.ValidSyllables)
+	// log.Printf("Valid syllables: %v", cedict.ValidSyllables)
 
 	maxReverse := 0
 	var longestPinyinToSimplified []string

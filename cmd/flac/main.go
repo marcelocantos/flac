@@ -44,7 +44,7 @@ func main2() (err error) {
 	var focusWords []string
 	if *phrase != "" {
 		focus = "phrase:" + *phrase
-		focusWords, err = parsePhrase(*phrase, rd.WordList.Words)
+		focusWords, err = parsePhrase(*phrase, rd)
 		if err != nil {
 			return err
 		}

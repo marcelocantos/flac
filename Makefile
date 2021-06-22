@@ -46,7 +46,7 @@ $(GLOBAL_WORDFREQ) :
 	[ -s $@ ] || (rm -f $@ && echo "Empty file!" && false)
 
 $(WORDS) : $(GLOBAL_WORDFREQ)
-	head -n 10000 $< | awk '//{print $1}' > $@ || rm -f $@
+	cat $< | awk '//{print $1}' > $@ || rm -f $@
 
 %.pb.go : %.proto
 	protoc --go_out=. $<

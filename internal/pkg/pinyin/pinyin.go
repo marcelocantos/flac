@@ -26,13 +26,19 @@ var (
 		5: "black",
 	}
 
-	vowels = map[rune][]rune{
-		'a': []rune(" āáǎàa"),
-		'e': []rune(" ēéěèe"),
-		'i': []rune(" īíǐìi"),
-		'o': []rune(" ōóǒòo"),
-		'u': []rune(" ūúǔùu"),
-		'ü': []rune(" ǖǘǚǜü"),
+	vowels = map[rune][]rune{ //  Breve forms:
+		'a': []rune(" āáǎàa"), // ă
+		'e': []rune(" ēéěèe"), // ĕ
+		'i': []rune(" īíǐìi"), // ĭ
+		'o': []rune(" ōóǒòo"), // ŏ
+		'u': []rune(" ūúǔùu"), // ŭ
+		'ü': []rune(" ǖǘǚǜü"), //
+		'A': []rune(" ĀÁǍÀA"), // Ă
+		'E': []rune(" ĒÉĚÈE"), // Ĕ
+		'I': []rune(" ĪÍǏÌI"), // Ĭ
+		'O': []rune(" ŌÓǑÒO"), // Ŏ
+		'U': []rune(" ŪÚǓÙU"), // Ŭ
+		'Ü': []rune(" ǕǗǙǛÜ"), //
 	}
 )
 

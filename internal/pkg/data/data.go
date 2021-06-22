@@ -3,7 +3,6 @@ package data
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/go-errors/errors"
 	_ "github.com/mattn/go-sqlite3"
@@ -189,7 +188,6 @@ func (d *Database) SetFocus(tx *sql.Tx, focus string) (e error) {
 	if err := tx.Stmt(d.focusIDStmt).QueryRow(focus).Scan(&focusID); err != nil {
 		return err
 	}
-	log.Print("focusID:", focusID)
 	d.focusID = sql.Named("focusID", focusID)
 
 	return nil
