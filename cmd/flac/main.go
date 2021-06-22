@@ -84,7 +84,13 @@ func main2() (err error) {
 		labelWidth := root.Answer.SetWord(word, score)
 
 		variantDef, entries = refdata.RandomDefinition(rd.Dict.Entries[word])
-		root.Hint.SetText(strings.Repeat(" ", labelWidth) + ui.DecorateDefinition(variantDef))
+
+		if variantDef == "" {
+			root.ResizeItem(root.Hint, 0, 0)
+		} else {
+			root.Hint.SetText(strings.Repeat(" ", labelWidth) + ui.DecorateDefinition(variantDef))
+			root.ResizeItem(root.Hint, 1, 0)
+		}
 
 		root.Answer.SetText("")
 
