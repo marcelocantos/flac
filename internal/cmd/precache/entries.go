@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -73,7 +72,7 @@ func loadCEDict(
 		return err
 	}
 
-	syllables := map[string]bool{}
+	syllables := cedict.ValidSyllables
 
 	lineno := 0
 	scanner := bufio.NewScanner(file)
@@ -160,11 +159,6 @@ scanning:
 			simps.Words = append(simps.Words, simplified)
 		}
 	}
-
-	for s := range syllables {
-		cedict.ValidSyllables = append(cedict.ValidSyllables, s)
-	}
-	sort.Strings(cedict.ValidSyllables)
 	// log.Printf("Valid syllables: %v", cedict.ValidSyllables)
 
 	maxReverse := 0

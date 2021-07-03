@@ -14,9 +14,10 @@ message WordList {
 
 message CEDict {
 	map<string, Entries> entries  = 1;
+    map<string, bool> validSyllables = 2;
     map<string, string> traditionalToSimplified = 3;
-	repeated string validSyllables = 4;
     map<string, Words> pinyinToSimplified = 5;
+    map<string, bool> ambiguousWords = 6;
 
     message Entries {
         map<string, Definitions> entries = 1;
@@ -31,5 +32,5 @@ message CEDict {
         repeated string words = 1;
     }
 
-    map<string, bool> deprecated_syllables = 2;
+    repeated string DEPRECATED_validSyllables = 4;
 }

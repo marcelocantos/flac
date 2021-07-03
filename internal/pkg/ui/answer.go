@@ -52,10 +52,9 @@ func (pi *AnswerInput) SetWord(word string, score int) int {
 	return tview.TaggedStringWidth(label)
 }
 
-func (pi *AnswerInput) SetValidSyllables(syllables []string) *AnswerInput {
-	for _, s := range syllables {
-		// log.Println(s)
-		pi.syllables[s] = true
+func (pi *AnswerInput) SetValidSyllables(syllables map[string]bool) *AnswerInput {
+	pi.syllables = syllables
+	for s := range syllables {
 		for i := 1; i <= len(s); i++ {
 			pi.prefixes[s[:i]] = true
 		}

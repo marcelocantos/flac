@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -52,6 +53,7 @@ func cacheRefData(
 		Dict: &refdata_pb.CEDict{
 			Entries:                 map[string]*refdata_pb.CEDict_Entries{},
 			TraditionalToSimplified: map[string]string{},
+			ValidSyllables:          map[string]bool{},
 			PinyinToSimplified:      map[string]*refdata_pb.CEDict_Words{},
 		},
 	}
@@ -96,6 +98,9 @@ func cacheRefData(
 	sort.Sort(words)
 
 	processWords(words, result.WordList)
+
+	result.Dict.AmbiguousWords = AmbiguousWords(result.Dict)
+	log.Print("Ambiguous words: ", result.Dict.AmbiguousWords)
 
 	var writer io.WriteCloser
 	writer, err = fs.Create(dest)
