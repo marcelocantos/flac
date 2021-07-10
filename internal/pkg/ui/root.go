@@ -16,13 +16,22 @@ type Root struct {
 }
 
 func New(db *data.Database, rd *refdata_pb.RefData) *Root {
-	results := newResults(db, rd)
-	results.ScrollToEnd()
+	root := &Root{}
 
-	hint := tview.NewTextView().
+	root.Results = newResults(db, rd)
+	root.Results.ScrollToEnd()
+
+	root.Hint = tview.NewTextView().
 		SetDynamicColors(true)
 
-	input := newAnswerInput()
+	root.Answer = newAnswerInput()
+	root.Answer.
+		SetValidSyllables(rd.Dict.ValidSyllables).
+		SetChangedFunc(func(text string) {
+			if text != "" {
+				root.Results.ClearMessages()
+			}
+		})
 
 	keyboardHelp := " [orange::]❲?❳[-::]reveal [orange::]❲esc❳[-::]exit "
 	keyboardHints := tview.NewTextView().
@@ -30,18 +39,13 @@ func New(db *data.Database, rd *refdata_pb.RefData) *Root {
 		SetText(keyboardHelp)
 
 	inputFlex := tview.NewFlex().
-		AddItem(input, 0, 1, true).
+		AddItem(root.Answer, 0, 1, true).
 		AddItem(keyboardHints, tview.TaggedStringWidth(keyboardHelp), 0, true)
 
-	mainFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(results, 0, 1, false).
-		AddItem(hint, 1, 0, false).
+	root.Flex = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(root.Results, 0, 1, false).
+		AddItem(root.Hint, 1, 0, false).
 		AddItem(inputFlex, 1, 0, true)
 
-	return &Root{
-		Flex:    mainFlex,
-		Results: results,
-		Hint:    hint,
-		Answer:  input,
-	}
+	return root
 }

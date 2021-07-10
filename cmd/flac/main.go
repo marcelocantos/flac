@@ -103,7 +103,6 @@ func main2() (err error) {
 	}
 
 	root.Answer.
-		SetValidSyllables(rd.Dict.ValidSyllables).
 		SetExitFunc(func() {
 			panic(stopError{})
 		}).
@@ -133,11 +132,6 @@ func main2() (err error) {
 				if err := root.Results.NotGood(outcome, false, &attempt); err != nil {
 					panic(err)
 				}
-			}
-		}).
-		SetChangedFunc(func(text string) {
-			if text != "" {
-				root.Results.ClearMessages()
 			}
 		})
 	app := tview.NewApplication().SetRoot(root, true)
