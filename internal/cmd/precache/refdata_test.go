@@ -31,6 +31,9 @@ func TestApplyVariantREs(t *testing.T) {
 	assertVariant(
 		`龢 和 [he2] /harmonious/`,
 		`龢 和 [he2] /old variant of 和[he2]/harmonious/`)
+	assertVariant(
+		`仝 同 [tong2] /(used in given names)/`,
+		`仝 同 [tong2] /(used in given names)/variant of 同[tong2]/`)
 
 	assertNoVariant(`惒 惒 [he2] /old variant of 和[he2]/`)
 	assertNoVariant(`咊 和 [he2] /old variant of 和[he2]/`)

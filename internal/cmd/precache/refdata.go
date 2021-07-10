@@ -27,7 +27,7 @@ var (
 
 	// Detect traditional-only variants.
 	tradOnlyVariantRE = regexp.MustCompile(
-		`^((?:\p{Han}+) (\p{Han}+) \[(.*?)\] /)` +
+		`^((?:\p{Han}+) (\p{Han}+) \[(.*?)\] /(?:.*?/)??)` +
 			`[^/]*(?:[^/]*\bvariant of|also written|see(?: also)?) ` +
 			`(?:\p{Han}+\|)?(?P<2>\p{Han}+)\[(?P<3>.*?)\][^/]*/`)
 
