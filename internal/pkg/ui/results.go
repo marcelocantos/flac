@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/marcelocantos/flac/internal/pkg/data"
@@ -171,13 +172,13 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 						num++
 						fmt.Fprintf(&sb, "[#228899::]%s[-::]", superNumber(num))
 					}
-					fmt.Fprintf(&sb, "[silver::]%s[-::]", part)
+					sb.WriteString(part)
 				}
 			} else {
 				if !strings.HasPrefix(def, "🆑:") {
 					fmt.Fprintf(&sb, "[#228899::]%*s[-::]", maxDigits, superNumber(num))
 				}
-				fmt.Fprintf(&sb, "[silver::]%s[-::]", def)
+				sb.WriteString(def)
 			}
 		}
 		r.appendMessage("%s", sb.String())
@@ -219,7 +220,7 @@ func (r *Results) NotGood(o *outcome.Outcome, easy bool, attempt *int) error {
 		}
 		for i := len(corrections) - 1; i >= 0; i-- {
 			for _, line := range corrections[i] {
-				r.appendMessage("[silver::]%s[-::]", line)
+				r.appendMessage("%s", line)
 			}
 		}
 
@@ -262,8 +263,8 @@ func (r *Results) refresh() func() {
 			return
 		}
 		if r.stale {
-			r.SetText("")
-			fmt.Fprintf(r, "%s欢迎来到flac，一起学中文吧！\n", strings.Repeat("\n", 999))
+			r.SetText("").SetTextColor(tcell.ColorSilver)
+			fmt.Fprintf(r, "%s[white::b]欢迎来到flac，一起学中文吧！[-::-]\n", strings.Repeat("\n", 999))
 
 			// Abuse history as a preallocated buffer for output.
 			output := append(r.history, r.goodsReport()...)
