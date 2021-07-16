@@ -2,10 +2,11 @@ package refdata
 
 import (
 	"bytes"
+	"crypto/rand"
 	_ "embed"
 	"io"
 	"io/ioutil"
-	"math/rand"
+	"math/big"
 	"strings"
 
 	"github.com/pierrec/lz4"
@@ -36,14 +37,22 @@ func New() (*refdata_pb.RefData, error) {
 	return rd, err
 }
 
-func RandomDefinition(entries *refdata_pb.CEDict_Entries) (string, *refdata_pb.CEDict_Entries) {
+func RandomDefinition(
+	word string,
+	entries *refdata_pb.CEDict_Entries,
+) (string, *refdata_pb.CEDict_Entries) {
 	if len(entries.Entries) == 1 {
 		return "", entries
 	}
 
 	ret := &refdata_pb.CEDict_Entries{}
 
-	n := rand.Int() % len(entries.Entries)
+	bign, err := rand.Int(rand.Reader, big.NewInt(int64(len(entries.Entries))))
+	if err != nil {
+		panic(err)
+	}
+	n := int(bign.Int64())
+
 	var pinyin string
 	var defs *refdata_pb.CEDict_Definitions
 	for pinyin, defs = range entries.Entries {
@@ -55,18 +64,35 @@ func RandomDefinition(entries *refdata_pb.CEDict_Entries) (string, *refdata_pb.C
 	}
 
 	var candidateDefs []string
+	see := -1
 	for _, def := range defs.Definitions {
 		switch {
-		case strings.HasPrefix(def, "surname "):
-			candidateDefs = append(candidateDefs, "surname")
 		case strings.HasPrefix(def, "also written "):
 		case strings.HasPrefix(def, "also pr. "):
+		case strings.HasPrefix(def, "CL:"):
+		case strings.HasPrefix(def, "variant of ") && strings.Contains(def, pinyin):
+		case strings.HasPrefix(def, "see ") && strings.Contains(def, pinyin):
+			candidateDefs = append(candidateDefs,
+				strings.ReplaceAll(def, pinyin, "🙈"))
+			see = len(candidateDefs)
+		case strings.HasPrefix(def, "surname "):
+			candidateDefs = append(candidateDefs, "surname")
 		default:
 			candidateDefs = append(candidateDefs, def)
 		}
 	}
 
-	n = rand.Int() % len(candidateDefs)
+	// "see ..." isn't a great choice of definition. Avoid it unless it's the
+	// only remaning option.
+	if see != -1 && len(candidateDefs) > 1 {
+		candidateDefs = append(candidateDefs[:see], candidateDefs[see+1:]...)
+	}
+
+	bign, err = rand.Int(rand.Reader, big.NewInt(int64(len(candidateDefs))))
+	if err != nil {
+		panic(err)
+	}
+	n = int(bign.Int64())
 	def := candidateDefs[n]
 
 	return def, ret
