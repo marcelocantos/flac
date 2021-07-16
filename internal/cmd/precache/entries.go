@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/afero"
 )
 
+var exampleRE = regexp.MustCompile(`(?i)\bExample:`)
+
 func applyVariantRE(variantRE *regexp.Regexp, line string) (string, bool) {
 	line2 := variantRE.ReplaceAllString(line, "$1")
 	if line == line2 {
@@ -88,6 +90,8 @@ scanning:
 			if line, ok = applyVariantREs(line); !ok {
 				continue scanning
 			}
+
+			line = exampleRE.ReplaceAllString(line, "e.g.:")
 
 			if match := cedictRemovalRE.FindStringSubmatch(line); match != nil {
 				log.Print(match)
