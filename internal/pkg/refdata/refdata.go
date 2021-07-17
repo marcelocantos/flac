@@ -83,8 +83,8 @@ func RandomDefinition(
 		}
 	}
 
-	// "see ..." isn't a great choice of definition. Avoid it unless it's the
-	// only remaning option.
+	// "(see|variant of) ..." aren't great choices of definitions to test. Avoid
+	// unless no other options reman.
 	if see != -1 && len(candidateDefs) > 1 {
 		candidateDefs = append(candidateDefs[:see], candidateDefs[see+1:]...)
 	}
