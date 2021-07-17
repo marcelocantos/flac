@@ -25,17 +25,18 @@ func decorateDefinitions(defs []string) []string {
 	ret := make([]string, 0, len(defs))
 
 	type group struct {
-		prefix string
-		suffix string
-		defs   []string
-		first  int
+		prefix  string
+		suffix  string
+		replace string
+		defs    []string
+		first   int
 	}
 	groups := []*group{
-		{first: -1, prefix: "to "},
-		{first: -1, prefix: "abbr. for "},
+		{first: -1, prefix: "to ", replace: "to… "},
+		{first: -1, prefix: "abbr. for ", replace: "abbr… "},
 		{first: -1, prefix: "classifier for "},
-		{first: -1, prefix: "(grammatical equivalent of ", suffix: ")"},
-		{first: -1, prefix: "(indicates ", suffix: ")"},
+		{first: -1, prefix: "(grammatical equivalent of ", suffix: ")", replace: "(gramm ≣… "},
+		{first: -1, prefix: "(indicates ", suffix: ")", replace: "(indic… "},
 	}
 
 defs:
@@ -56,8 +57,10 @@ defs:
 	for _, g := range groups {
 		if g.first != -1 {
 			if len(g.defs) > 1 {
-				ret[g.first] = fmt.Sprintf("%s\035[-::]%s%s",
-					g.prefix, strings.Join(g.defs, "[#666666::],[-::]\035"), g.suffix)
+				ret[g.first] = fmt.Sprintf("%s\035%s%s",
+					g.replace,
+					strings.Join(g.defs, "[#666666::],[-::]\035"),
+					g.suffix)
 			}
 		}
 	}
