@@ -71,8 +71,8 @@ func RandomDefinition(
 		case strings.HasPrefix(def, "also written "):
 		case strings.HasPrefix(def, "also pr. "):
 		case strings.HasPrefix(def, "CL:"):
-		case strings.HasPrefix(def, "variant of ") && strings.Contains(def, pinyin):
-		case strings.HasPrefix(def, "see ") && strings.Contains(def, pinyin):
+		case (strings.HasPrefix(def, "variant of ") || strings.HasPrefix(def, "see ")) &&
+			strings.Contains(def, pinyin):
 			candidateDefs = append(candidateDefs,
 				strings.ReplaceAll(def, pinyin, "🙈"))
 			see = len(candidateDefs)
@@ -90,7 +90,7 @@ func RandomDefinition(
 	}
 
 	if len(candidateDefs) == 0 {
-		panic(errors.Errorf("No useful definitions for %s", word))
+		panic(errors.Errorf("no useful definitions for %s: %v", word, defs))
 	}
 	bign, err = rand.Int(rand.Reader, big.NewInt(int64(len(candidateDefs))))
 	if err != nil {
