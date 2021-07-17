@@ -59,6 +59,9 @@ flac : $(FLAC_SRCS)
 precache : $(PRECACHE_SRCS)
 	go build ./internal/cmd/precache
 
+lint :
+	docker run --rm -it -v $$(pwd):/app -w /app golangci/golangci-lint:v1.41.1 golangci-lint run
+
 # test
 
 .PHONY : test

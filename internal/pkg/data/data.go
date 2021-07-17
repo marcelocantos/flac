@@ -39,23 +39,26 @@ func NewDatabase(path string) (*Database, error) {
 		return nil, err
 	}
 
-	tx, err := d.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	createTable := func(def string) string {
-		return "CREATE TABLE IF NOT EXISTS " + def
-	}
-	for _, def := range []string{
-		createTable(`word_score (
+	if err := func() (e error) {
+		tx, err := d.db.Begin()
+		if err != nil {
+			return err
+		}
+		defer commit(tx, &e)
+
+		createTable := func(def string) string {
+			return "CREATE TABLE IF NOT EXISTS " + def
+		}
+		for _, def := range []string{
+			createTable(`word_score (
             word  TEXT    PRIMARY KEY,
             score INTEGER
         )`),
-		createTable(`queue (
+			createTable(`queue (
             pos  INT  PRIMARY KEY,
             word TEXT UNIQUE
         )`),
-		createTable(`focus_queue (
+			createTable(`focus_queue (
             focusID INTEGER REFERENCES focus (focusID),
             pos     INT,
             word    TEXT,
@@ -63,26 +66,27 @@ func NewDatabase(path string) (*Database, error) {
             PRIMARY KEY (focusID, pos),
             UNIQUE      (focusID, word)
         )`),
-		createTable(`focus (
+			createTable(`focus (
             focusID INTEGER PRIMARY KEY,
             focus   TEXT    UNIQUE
         )`),
-		`PRAGMA foreign_keys = ON`,
-		`INSERT OR IGNORE INTO focus (focus) VALUES ('')`,
-		`INSERT OR IGNORE INTO focus_queue (focusID, word, pos)
+			`PRAGMA foreign_keys = ON`,
+			`INSERT OR IGNORE INTO focus (focus) VALUES ('')`,
+			`INSERT OR IGNORE INTO focus_queue (focusID, word, pos)
             SELECT focusID, word, pos
             FROM   queue CROSS JOIN focus
 			WHERE  focus.focus = ''
         `,
-		`DELETE FROM queue`,
-	} {
-		_, err := d.db.Exec(def)
-		if err != nil {
-			tx.Rollback()
-			return nil, errors.WrapPrefix(err, def, 0)
+			`DELETE FROM queue`,
+		} {
+			if _, err := d.db.Exec(def); err != nil {
+				return errors.Wrap(err, 0)
+			}
 		}
+		return nil
+	}(); err != nil {
+		return nil, err
 	}
-	tx.Commit()
 
 	for stmt, query := range map[**sql.Stmt]string{
 		&d.focusIDStmt:     `SELECT focusID FROM focus WHERE focus = ?`,
@@ -259,7 +263,7 @@ func (d *Database) WordPos(word string) (_ int, e error) {
 func (d *Database) wordPos(tx *sql.Tx) func(word string) (int, error) {
 	getWordPosStmt := tx.Stmt(d.wordPosStmt)
 	return func(word string) (int, error) {
-		return d.selectInt(getWordPosStmt, "%s: not found in queue", sql.Named("word", word), d.focusID)
+		return d.selectInt(getWordPosStmt, "%s: not found in queue", sql.Named("word", word), d.focusID) //nolint:govet
 	}
 }
 
@@ -393,8 +397,13 @@ type ErrNotFound error
 
 func commit(tx *sql.Tx, err *error) {
 	if *err != nil {
-		tx.Rollback()
+		if err2 := tx.Rollback(); err2 != nil {
+			*err = errors.Errorf("rollback failed: %v (caused by %w)", err2, *err)
+		}
 	} else {
 		*err = tx.Commit()
+		if *err != nil {
+			*err = errors.Wrap(*err, 0)
+		}
 	}
 }

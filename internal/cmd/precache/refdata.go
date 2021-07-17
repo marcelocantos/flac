@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 
+	"github.com/go-errors/errors"
 	"github.com/pierrec/lz4"
 	"github.com/spf13/afero"
 	"google.golang.org/protobuf/proto"
@@ -118,7 +119,9 @@ func cacheRefData(
 		writer = lz4.NewWriter(writer)
 		defer writer.Close()
 	} else {
-		writer.Write([]byte("NOCOMPRESS:"))
+		if _, err := writer.Write([]byte("NOCOMPRESS:")); err != nil {
+			return errors.Wrap(err, 0)
+		}
 	}
 	if _, err = writer.Write(data); err != nil {
 		return err
