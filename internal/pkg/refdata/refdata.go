@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/pierrec/lz4"
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
@@ -88,6 +89,9 @@ func RandomDefinition(
 		candidateDefs = append(candidateDefs[:see], candidateDefs[see+1:]...)
 	}
 
+	if len(candidateDefs) == 0 {
+		panic(errors.Errorf("No useful definitions for %s", word))
+	}
 	bign, err = rand.Int(rand.Reader, big.NewInt(int64(len(candidateDefs))))
 	if err != nil {
 		panic(err)

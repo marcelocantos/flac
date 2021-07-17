@@ -10,6 +10,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/pierrec/lz4 v2.6.1+incompatible
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/tview v0.0.0-20210608105643-d4fb0348227b
 	github.com/spf13/afero v1.6.0
 	github.com/spkg/bom v1.0.0
