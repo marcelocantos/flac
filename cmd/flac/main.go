@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-errors/errors"
 	"github.com/rivo/tview"
 
 	"github.com/marcelocantos/flac/internal/pkg/assess"
 	"github.com/marcelocantos/flac/internal/pkg/data"
+	"github.com/marcelocantos/flac/internal/pkg/mainwrap"
 	"github.com/marcelocantos/flac/internal/pkg/outcome"
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"
 	"github.com/marcelocantos/flac/internal/pkg/refdata"
@@ -35,7 +35,6 @@ func main2() (err error) {
 	if err != nil {
 		return err
 	}
-	_ = rd
 
 	db, err := data.NewDatabase("flac.db")
 	if err != nil {
@@ -104,7 +103,7 @@ func main2() (err error) {
 
 	root.Answer.
 		SetExitFunc(func() {
-			panic(stopError{})
+			panic(mainwrap.Stop)
 		}).
 		SetGiveUpFunc(func() {
 			outcome := &outcome.Outcome{
@@ -143,21 +142,6 @@ func main2() (err error) {
 	return nil
 }
 
-type stopError struct{}
-
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			if _, is := r.(stopError); !is {
-				panic(r)
-			}
-		}
-	}()
-	if err := main2(); err != nil {
-		if err, is := err.(*errors.Error); is {
-			fmt.Fprintln(os.Stderr, err.ErrorStack())
-		}
-		fmt.Println(err)
-		os.Exit(2)
-	}
+	mainwrap.Main(main2)
 }
