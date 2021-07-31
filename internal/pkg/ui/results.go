@@ -119,14 +119,16 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	maxPrefixLen := 0
 	maxDigits := 0
 
-	var words []string
+	var words keyedStrings
 	for word := range o.Entries.Entries {
-		words = append(words, strings.ToLower(word)+"\034"+word)
+		words = append(words, [2]string{strings.ToLower(word), word})
 	}
-	sort.Strings(words)
+	sort.Sort(words)
 
-	for _, sortWord := range words {
-		word := strings.Split(sortWord, "\034")[1]
+	decoratedDefs := make([][]string, 0, len(words))
+
+	for kwi, keyedWord := range words {
+		word := keyedWord[1]
 		entry := o.Entries.Entries[word]
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
@@ -134,8 +136,8 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 			maxPrefixLen = prefixLen
 		}
 		num := 1
-		// TODO: Avoid second call to decorateDefinitions below.
-		for _, def := range decorateDefinitions(entry.Definitions) {
+		decoratedDefs[kwi] = decorateDefinitions(entry.Definitions)
+		for _, def := range decoratedDefs[kwi] {
 			if parts := strings.Count(def, "\035"); parts > 0 {
 				num += parts
 			} else {
@@ -151,15 +153,14 @@ func (r *Results) Good(word string, o *outcome.Outcome, easy bool) error {
 	}
 	prefix := "\n" + strings.Repeat(" ", maxPrefixLen)
 
-	for _, sortWord := range words {
-		word := strings.Split(sortWord, "\034")[1]
-		entry := o.Entries.Entries[word]
+	for kwi, keyedWord := range words {
+		word := keyedWord[1]
 		var sb strings.Builder
 		pword := pinyin.MustNewWord(word)
 		prefixLen := len([]rune(pword.String())) + leaderLen
 		fmt.Fprintf(&sb, "%s%s%s", pword.ColorString(""), strings.Repeat(" ", maxPrefixLen-prefixLen), leader)
 		num := 0
-		for i, def := range decorateDefinitions(entry.Definitions) {
+		for i, def := range decoratedDefs[kwi] {
 			num++
 			if i > 0 {
 				sb.WriteString(prefix)
