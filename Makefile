@@ -5,6 +5,7 @@ empty :=
 space := $(empty) $(empty)
 
 REFDATA_PB = internal/pkg/proto/refdata_pb/refdata.pb.go
+REFDATA_JSON = electron/src/refdata.json
 
 # addenda.txt must come second, so its removals get applied.
 REFDATA_SRCS = \
@@ -15,7 +16,7 @@ REFDATA_CACHE = internal/pkg/refdata/refdata.cache
 
 WORDS = refdata/words.txt
 
-GEN_FILES = $(REFDATA_PB) $(REFDATA_CACHE) $(WORDS)
+GEN_FILES = $(REFDATA_PB) $(REFDATA_CACHE) $(WORDS) $(REFDATA_JSON)
 
 GO_SRCS = $(REFDATA_PB) $(shell find . -name '*.go')
 
@@ -31,7 +32,7 @@ PRECACHE_SRCS = $(foreach dir,$(PRECACHE_DIRS),$(wildcard $(dir)/*.go))
 # generate
 
 .PHONY : gen
-gen : $(REFDATA_PB) $(GEN_FILES)
+gen : $(GEN_FILES)
 
 $(REFDATA_CACHE) : precache $(WORDS) $(REFDATA_SRCS)
 	./precache -o $@ $(WORDS) $(subst $(space),:,$(REFDATA_SRCS))
@@ -50,6 +51,9 @@ $(WORDS) : $(GLOBAL_WORDFREQ)
 
 %.pb.go : %.proto
 	protoc --go_out=. $<
+
+$(REFDATA_JSON) : $(REFDATA_CACHE) internal/cmd/jsonrefdata/main.go
+	go run ./internal/cmd/jsonrefdata $< $@
 
 # binaries
 

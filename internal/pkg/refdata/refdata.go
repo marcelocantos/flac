@@ -20,8 +20,12 @@ import (
 var refdata_proto_lz4 []byte
 
 func New() (*refdata_pb.RefData, error) {
-	var reader io.Reader = bytes.NewBuffer(refdata_proto_lz4)
-	if !bytes.HasPrefix(refdata_proto_lz4, []byte("NOCOMPRESS:")) {
+	return NewFromBytes(refdata_proto_lz4)
+}
+
+func NewFromBytes(data []byte) (*refdata_pb.RefData, error) {
+	var reader io.Reader = bytes.NewBuffer(data)
+	if !bytes.HasPrefix(data, []byte("NOCOMPRESS:")) {
 		reader = lz4.NewReader(reader)
 	} else {
 		if _, err := reader.Read([]byte("NOCOMPRESS:")); err != nil {

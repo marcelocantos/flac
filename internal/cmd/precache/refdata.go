@@ -49,7 +49,7 @@ func cacheRefData(
 ) error {
 	result := &refdata_pb.RefData{
 		WordList: &refdata_pb.WordList{
-			Frequencies: map[string]int64{},
+			Frequencies: map[string]int32{},
 		},
 		Dict: &refdata_pb.CEDict{
 			Entries:                 map[string]*refdata_pb.CEDict_Entries{},

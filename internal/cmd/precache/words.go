@@ -60,6 +60,6 @@ func loadWords(fs afero.Fs, path string, limit int) (map[string]wordEntry, error
 func processWords(entries []wordEntry, wl *refdata_pb.WordList) {
 	for _, entry := range entries {
 		wl.Words = append(wl.Words, entry.word)
-		wl.Frequencies[entry.word] = int64(entry.frequency)
+		wl.Frequencies[entry.word] = int32(entry.frequency)
 	}
 }
