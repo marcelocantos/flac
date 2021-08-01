@@ -10,10 +10,6 @@
   padding-top: 0.25em;
 }
 
-.row > p {
-  width: ;
-}
-
 .welcome {
   font-weight: bold;
 }
@@ -34,6 +30,15 @@
   margin-top: 0.25em;
   margin-bottom: 0.8em;
 }
+
+.form-label {
+  font-size: larger;
+}
+
+.form-label > strong {
+  color: rgb(22, 122, 223);
+}
+
 
 /* .App {
   text-align: center;

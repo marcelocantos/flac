@@ -5,7 +5,6 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 // Bootstrap
-import './bootstrap/js/bootstrap.esm';
 import 'bootstrap/dist/css/bootstrap.css';
 
 ReactDOM.render(
