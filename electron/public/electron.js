@@ -3,6 +3,8 @@ const path = require('path');
 const { app, BrowserWindow } = require('electron');
 const isDev = require('electron-is-dev');
 
+const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
+
 function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
@@ -10,6 +12,7 @@ function createWindow() {
     height: 600,
     webPreferences: {
       nodeIntegration: true,
+      enableRemoteModule: true,
     },
   });
 
@@ -24,6 +27,10 @@ function createWindow() {
   if (isDev) {
     win.webContents.openDevTools({ mode: 'detach' });
   }
+
+  installExtension(REACT_DEVELOPER_TOOLS)
+      .then(name => console.log(`Added Extension: ${name}`))
+      .catch(error => console.log('An error occurred:', error));
 }
 
 // This method will be called when Electron has finished
