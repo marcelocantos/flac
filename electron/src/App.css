@@ -11,7 +11,7 @@
 }
 
 .welcome {
-  font-weight: bold;
+  font-weight: 500;
 }
 
 .col.main {
@@ -36,9 +36,9 @@
 }
 
 .form-label > strong {
+  font-weight: 500;
   color: rgb(22, 122, 223);
 }
-
 
 /* .App {
   text-align: center;
