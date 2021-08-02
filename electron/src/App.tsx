@@ -11,30 +11,7 @@ import Row from 'react-bootstrap/Row';
 
 import Results from './Results';
 
-import untypedRefdata from './refdata.json';
-
-type Refdata = {
-  dict: {
-    ambiguousWords: {[key: string]: boolean},
-    entries: {[key: string]: {
-      entries: {[key: string]: {
-        definitions: string[],
-      }},
-      traditional: string,
-    }},
-    pinyinToSimplified: {[key: string]: {
-      words: string[],
-    }},
-    traditionalToSimplified: {string: string},
-    validSyllables: {string: boolean},
-  }
-  wordList: {
-    words: string[],
-    frequencies: {string: number},
-  },
-};
-
-const refdata = untypedRefdata as Refdata;
+import refdata from './Refdata';
 
 console.log({refdata});
 
