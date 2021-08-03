@@ -5,9 +5,10 @@ const isDev = require('electron-is-dev');
 
 const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
 
-function createWindow() {
+async function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
+    title: "flac",
     width: 800,
     height: 600,
     webPreferences: {
@@ -28,9 +29,12 @@ function createWindow() {
     win.webContents.openDevTools({ mode: 'detach' });
   }
 
-  installExtension(REACT_DEVELOPER_TOOLS)
-      .then(name => console.log(`Added Extension: ${name}`))
-      .catch(error => console.log('An error occurred:', error));
+  try {
+    await installExtension(REACT_DEVELOPER_TOOLS);
+    console.log(`Added Extension: ${name}`)
+  } catch (error) {
+    console.log('An error occurred:', error)
+  }
 }
 
 // This method will be called when Electron has finished
@@ -42,9 +46,9 @@ app.whenReady().then(createWindow);
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  // if (process.platform !== 'darwin') {
     app.quit();
-  }
+  // }
 });
 
 app.on('activate', () => {

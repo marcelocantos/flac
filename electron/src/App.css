@@ -10,8 +10,10 @@
   padding-top: 0.25em;
 }
 
-.welcome {
+p.welcome {
   font-weight: 500;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
 }
 
 .col.main {

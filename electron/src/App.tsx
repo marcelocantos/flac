@@ -53,10 +53,10 @@ function App() {
   return (
     <Container fluid className="Container">
       <Row>
-        <h1>flac: learn 中文</h1>
+        <p className="welcome">欢迎来到flac，一起学中文吧！</p>
       </Row>
       <Col className="main">
-        <p className="welcome">欢迎来到flac，一起学中文吧！</p>
+
         <Results log={[]} streak={[]}/>
       </Col>
       <Row className="input">
