@@ -12,7 +12,7 @@ export default function Lex(raw: string): Tokens[] {
 			throw new Error(`${raw}: invalid pinyin`)
 		}
 		switch (groups[1]) {
-		case "":
+		case undefined:
 			tokens.push(new Token(groups[2], new Tones(groups[3])));
 			break;
 		case "/":

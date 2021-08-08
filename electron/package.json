@@ -16,13 +16,16 @@
     "react-bootstrap": "^2.0.0-beta.4",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
+    "sqlite-async": "^1.1.1",
+    "sqlite3": "^5.0.2",
+    "ts-jest": "^27.0.4",
     "typescript": "^4.3.5",
     "web-vitals": "^1.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --coverage",
     "eject": "react-scripts eject",
     "dev": "concurrently -k BROWSER='none npm start' npm:electron",
     "electron": "wait-on tcp:3000 && electron ."
@@ -128,6 +131,9 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@types/reflect-metadata": "^0.1.0",
+    "@types/sqlite3": "^3.1.7",
     "concurrently": "^6.2.0",
     "electron": "^13.1.8",
     "electron-devtools-installer": "^3.2.0",

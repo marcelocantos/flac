@@ -13,8 +13,6 @@ import Results from './Results';
 
 import refdata from './Refdata';
 
-console.log({refdata});
-
 const words = refdata.wordList.words;
 const entries = refdata.dict.entries;
 
@@ -27,7 +25,6 @@ function App() {
 
   const word = words[wordIndex];
   const entry = entries[word];
-  console.log({word, entry});
 
   function checkInput(e: React.ChangeEvent<any>) {
     const value = e.target.value;
@@ -39,15 +36,13 @@ function App() {
   function submit(e: React.MouseEvent<HTMLElement>) {
     e.preventDefault();
     const current = answer.current as any;
-    if (current) {
-      if (current.value in entry.entries) {
-        setWordIndex(wordIndex + 1);
-        setInput("");
-      } else {
-        setError(true);
-      }
-      current.focus();
+    if (current.value in entry.entries) {
+      setWordIndex(wordIndex + 1);
+      setInput("");
+    } else {
+      setError(true);
     }
+    current.focus();
   }
 
   return (
@@ -61,12 +56,13 @@ function App() {
       </Col>
       <Row className="input">
         <Form>
-          <Form.Label id="prompt">
+          <Form.Label htmlFor="answer">
             Enter the pinyin for <strong>{words[wordIndex]}</strong>.
           </Form.Label>
           <InputGroup>
             <InputGroup.Text style={{color: "#666"}}>pinyin&nbsp;→</InputGroup.Text>
             <Form.Control
+              id="answer"
               ref={answer}
               isInvalid={error}
               autoFocus={true}
