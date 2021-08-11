@@ -6,9 +6,9 @@ export default class Word {
   constructor(chars: string | Pinyin[]) {
     if (typeof chars === "string") {
       const arr: Pinyin[] = [];
-      while (chars != "") {
+      while (chars !== "") {
         const p = new Pinyin(chars);
-        chars = chars.slice(p.raw.length);
+        chars = chars.slice(p.consumed);
         arr.push(p);
       }
       this.chars = arr;
@@ -29,10 +29,20 @@ export default class Word {
     const n = Math.max(a.length, b.length);
     for (let i = 0; i < n; ++i) {
       const c = Pinyin.compare(a.chars[i], b.chars[i]);
-      if (c != 0) {
+      if (c !== 0) {
         return c;
       }
     }
     return a.length - b.length;
+  }
+
+  slice(start?: number | undefined, end?: number | undefined): Word {
+    return new Word(this.chars.slice(start, end));
+  }
+
+  *[Symbol.iterator]() {
+    for (const char of this.chars) {
+      yield char;
+    }
   }
 }

@@ -8,4 +8,10 @@ export default class Tokens {
 	get string(): string {
 		return this.tokens.map(t => t.string).join(' ');
 	}
+
+	*[Symbol.iterator]() {
+		for (const token of this.tokens) {
+			yield token;
+		}
+	}
 }

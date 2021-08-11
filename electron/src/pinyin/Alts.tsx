@@ -16,7 +16,7 @@ export default class Alts {
 
       let tones = 0;
       for (const t of g[2]) {
-        tones |= 1 << parseInt(t);
+        tones |= 1 << Number.parseInt(t);
       }
 
       const syllable = g[1];
@@ -51,10 +51,16 @@ export default class Alts {
     const n = Math.max(a.length, b.length);
     for (let i = 0; i < n; ++i) {
       const c = Word.compare(a.words[i], b.words[i]);
-      if (c != 0) {
+      if (c !== 0) {
         return c;
       }
     }
     return a.length - b.length;
+  }
+
+  *[Symbol.iterator]() {
+    for (const word of this.words) {
+      yield word;
+    }
   }
 }

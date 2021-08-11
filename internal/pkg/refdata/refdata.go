@@ -9,8 +9,8 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/go-errors/errors"
 	"github.com/pierrec/lz4"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/marcelocantos/flac/internal/pkg/proto/refdata_pb"

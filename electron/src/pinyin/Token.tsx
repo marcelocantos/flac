@@ -1,4 +1,3 @@
-import Alts from './Alts';
 import Pinyin from './Pinyin';
 import Tones from './Tones';
 import Word from './Word';
@@ -13,10 +12,10 @@ export default class Token {
 		return `${this.syllable}(${this.tones ? this.tones.string : ''})`
 	}
 
-	get alts(): Alts {
+	*[Symbol.iterator]() {
 		const syllable = this.syllable;
-		return new Alts([...this.tones??[]].map(tone =>
-			new Word([new Pinyin({syllable, tone})])
-		));
+		for (const tone of this.tones??[]) {
+			yield new Word([new Pinyin({syllable, tone})]);
+		}
 	}
 }
