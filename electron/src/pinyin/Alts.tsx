@@ -38,13 +38,7 @@ export default class Alts {
   get raw   (): string { return this.words.map(w => w.raw   ).join('/'); }
 
   get html() {
-    return (
-      <span>
-        {this.words.map((c, i) =>
-          <React.Fragment>{i ? '/' : ''}{c.html}</React.Fragment>
-        )}
-      </span>
-    );
+    return <span>{this.words.map((c, i) => <>{i ? '/' : ''}{c.html}</>)}</span>;
   }
 
   static compare(a: Alts, b: Alts): number {

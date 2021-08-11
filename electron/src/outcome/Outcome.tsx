@@ -1,4 +1,3 @@
-import React from 'react';
 import Alts from '../pinyin/Alts';
 import Word from '../pinyin/Word';
 import { Entries } from '../refdata/Refdata';
@@ -25,9 +24,7 @@ export default class Outcome {
   }
 
   get Correction() {
-    return (
-      <React.Fragment>{this.Word} = {this.WordAlts.html}</React.Fragment>
-    );
+    return <>{this.Word} = {this.WordAlts.html}</>;
   }
 
   get WordAlts(): Alts {
