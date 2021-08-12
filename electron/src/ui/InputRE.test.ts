@@ -99,12 +99,16 @@ const expectedInputRE = /^(.*)\((.*)\)(.*)$/;
 function expectMatch(pattern: string) {
   const e = pattern.match(expectedInputRE);
   expect(e).not.toBeUndefined();
-  const all = e[1] + e[2] + e[3];
-  const expected = e[2];
+  if (e) {
+    const all = e[1] + e[2] + e[3];
+    const expected = e[2];
 
-  const m = all.match(InputRE.inputRE);
-  expect(m).not.toBeUndefined();
-  expect(m[1]).toEqual(expected);
+    const m = all.match(InputRE.inputRE);
+    expect(m).not.toBeUndefined();
+    if (m) {
+      expect(m[1]).toEqual(expected);
+    }
+  }
 }
 
 function expectNoMatch(input: string) {
