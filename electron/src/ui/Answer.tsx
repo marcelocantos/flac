@@ -47,7 +47,8 @@ export default function Answer({word, submit}: AnswerProps) {
 
   function checkInput(e: React.ChangeEvent<any>) {
     const value = e.target.value as string;
-    let error = !accept(value);
+    const accepted = !!value && accept(value);
+    let error = !!value && !accepted;
 
     if (!error) {
       console.log(error);
@@ -88,7 +89,7 @@ export default function Answer({word, submit}: AnswerProps) {
           aria-describedby="input"
         />
         <Button
-            disabled={error}
+            disabled={!/\d$/.test(input) || error}
             type="submit"
             onClick={onClick}
             tabIndex={-1}
