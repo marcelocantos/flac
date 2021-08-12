@@ -3,7 +3,7 @@ import App from './App';
 
 it('renders learn react link', () => {
   const app = render(<App />);
-  const linkElement = app.getByText(/欢迎来到flac，一起学中文吧！/i);
+  const linkElement = app.getByText(/欢迎来到flac，我们一起学中文吧！/i);
   expect(linkElement).toBeInTheDocument();
 
   const answerLabel = app.getByText(/^enter the /i);
