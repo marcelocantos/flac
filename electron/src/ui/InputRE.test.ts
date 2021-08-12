@@ -102,12 +102,12 @@ function expectMatch(pattern: string) {
   const all = e[1] + e[2] + e[3];
   const expected = e[2];
 
-  const m = all.match(InputRE.input);
+  const m = all.match(InputRE.inputRE);
   expect(m).not.toBeUndefined();
   expect(m[1]).toEqual(expected);
 }
 
 function expectNoMatch(input: string) {
-  const e = input.match(InputRE.input);
+  const e = input.match(InputRE.inputRE);
   expect(e).not.toBeUndefined();
 }

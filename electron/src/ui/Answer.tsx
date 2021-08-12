@@ -4,36 +4,66 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 
+import { inputRE, inputCharRE } from './InputRE';
+
 import refdata from '../refdata/Refdata';
 
-const words = refdata.wordList.words;
-const entries = refdata.dict.entries;
+const validSyllables = refdata.dict.validSyllables;
 
-export default function Answer() {
-  const [wordIndex, setWordIndex] = useState(0);
+const validPrefixes = (() => {
+  const ret = new Set<string>(['']);
+  for (const s in validSyllables) {
+    for (let i = 1; i <= s.length; i++) {
+      ret.add(s.slice(0, i));
+    }
+  }
+  return ret
+})();
+
+interface AnswerProps {
+  word: string;
+  submit: (answer: string) => string | boolean;
+}
+
+export default function Answer({word, submit}: AnswerProps) {
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
 
   const answer = useRef(null);
 
-  const word = words[wordIndex];
-  const entry = entries[word];
+  function accept(text: string): boolean {
+    const m = text.match(inputRE);
+    if (!m || !validPrefixes.has(m[2])) {
+      return false;
+    }
+    for (const [, m] of text.matchAll(inputCharRE)) {
+      console.log(m);
+      if (!validPrefixes.has(m)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   function checkInput(e: React.ChangeEvent<any>) {
-    const value = e.target.value;
-    const error = !/^([a-z]+\d)*([a-z]+\d?)?$/.test(value);
+    const value = e.target.value as string;
+    let error = !accept(value);
+
+    if (!error) {
+      console.log(error);
+    }
     setError(error);
     setInput(e.target.value);
   }
 
-  function submit(e: React.MouseEvent<HTMLElement>) {
+  function onClick(e: React.MouseEvent<HTMLElement>) {
     e.preventDefault();
     const current = answer.current as any;
-    if (current.value in entry.entries) {
-      setWordIndex(wordIndex + 1);
-      setInput("");
+    const result = submit(current.value);
+    if (typeof result === "string") {
+      setInput(result);
     } else {
-      setError(true);
+      setError(result);
     }
     current.focus();
   }
@@ -41,7 +71,7 @@ export default function Answer() {
   return (
     <Form>
       <Form.Label htmlFor="answer">
-        Enter the pinyin for <strong>{words[wordIndex]}</strong>.
+        Enter the pinyin for <strong>{word}</strong>.
       </Form.Label>
       <InputGroup>
         <InputGroup.Text style={{color: "#666"}}>pinyin&nbsp;→</InputGroup.Text>
@@ -60,7 +90,7 @@ export default function Answer() {
         <Button
             disabled={error}
             type="submit"
-            onClick={submit}
+            onClick={onClick}
             tabIndex={-1}
           >
           Submit
