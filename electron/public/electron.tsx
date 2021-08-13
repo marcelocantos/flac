@@ -1,7 +1,10 @@
 const path = require('path');
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const isDev = require('electron-is-dev');
+
+const AsyncDB = require('./data/AsyncDB');
+const Database = require('./data/Database');
 
 const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
 
@@ -12,8 +15,11 @@ async function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      nodeIntegration: false,
+      webSecurity: true,
+      preload: path.join(__dirname, "preload.js"), // use a preload script
     },
   });
 
@@ -36,6 +42,13 @@ async function createWindow() {
     console.log('An error occurred:', error)
   }
 }
+
+ipcMain.handle("data", async (_, {words}) => {
+  console.log(Database);
+  const db = await AsyncDB.open('flac.db');
+  const data = await Database.build(db, "", words);
+  return {HeadWord: await data.HeadWord};
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

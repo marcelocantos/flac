@@ -37,7 +37,6 @@ export default function Answer({word, submit}: AnswerProps) {
       return false;
     }
     for (const [, m] of text.matchAll(inputCharRE)) {
-      console.log(m);
       if (!validPrefixes.has(m)) {
         return false;
       }
@@ -50,9 +49,6 @@ export default function Answer({word, submit}: AnswerProps) {
     const accepted = !!value && accept(value);
     let error = !!value && !accepted;
 
-    if (!error) {
-      console.log(error);
-    }
     setError(error);
     setInput(e.target.value);
   }

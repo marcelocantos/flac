@@ -14,6 +14,10 @@ import './App.css';
 const entries = refdata.dict.entries;
 const words = refdata.wordList.words;
 
+(window as any).api.call("data", {words: refdata.wordList.words}).then((result: any, error: any) => {
+  console.log({result, error});
+});
+
 export default function App() {
   const [wordIndex, setWordIndex] = useState(0);
 
