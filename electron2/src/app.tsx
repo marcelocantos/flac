@@ -1,8 +1,15 @@
-import * as React from 'react';
+import React from 'react';
 import * as ReactDOM from 'react-dom';
 
+import Root from './Root';
+
 function render() {
-  ReactDOM.render(<h2>Hello from React!</h2>, document.body);
+  ReactDOM.render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>,
+    document.getElementById('root'),
+  );
 }
 
 render();
