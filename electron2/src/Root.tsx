@@ -15,7 +15,9 @@ const entries = refdata.dict.entries;
 const words = refdata.wordList.words;
 
 type MyWindow = typeof window & {
-  api: (channel: string, ...args: unknown[]) => unknown,
+  api: {
+    call: (channel: string, ...args: unknown[]) => unknown,
+  },
 };
 
 export default function App(): JSX.Element {
@@ -28,7 +30,7 @@ export default function App(): JSX.Element {
   useEffect(() => {
     (async () => {
       const n = await (window as MyWindow).api.call("data");
-      setNum(n);
+      setNum(n as number);
     })();
   })
 
