@@ -36,8 +36,8 @@ export class Database implements Interface.Database {
     return this.bridge.call<void>("close");
   }
 
-  get HeadWord(): Promise<string> {
-    return this.bridge.get<string>("HeadWord");
+  get HeadWord(): Promise<{word: string, score: number}> {
+    return this.bridge.get<{word: string, score: number}>("HeadWord");
   }
 
   get MaxScore(): Promise<number> {
@@ -57,7 +57,7 @@ export class Database implements Interface.Database {
   }
 
   UpdateScoreAndPos(word: string, score: number, dest: number): Promise<void> {
-    return this.bridge.call<void>("UpdateScoreAndPos", word, dest);
+    return this.bridge.call<void>("UpdateScoreAndPos", word, score, dest);
   }
 
   SetFocus(focus: string): Promise<void> {

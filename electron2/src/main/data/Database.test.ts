@@ -52,7 +52,7 @@ it('WordAt', async () => {
 	const d = await prepareDatabase();
 
 	expect(await d.WordAt(0)).toEqual("第");
-	expect(await d.HeadWord).toEqual("第");
+	expect(await d.HeadWord).toEqual({word: "第", score: undefined});
 	expect(await d.WordAt(1)).toEqual("的");
 });
 

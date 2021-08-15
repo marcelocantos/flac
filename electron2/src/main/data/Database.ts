@@ -124,7 +124,7 @@ export default class Database implements Interface.Database {
 
       for (let i = 0; i < words.length; ++i) {
         const $word = words[i];
-        let wordPos = await d.wordPos($word);
+        let wordPos = await d.WordPos($word);
         if (typeof wordPos == "undefined") {
           wordPos = ++maxPos;
           await d.s.enqueueWord({...d.focusID, $pos: wordPos, $word});
@@ -150,8 +150,12 @@ export default class Database implements Interface.Database {
     await this.db.close();
   }
 
-  get HeadWord(): Promise<string> {
-    return this.WordAt(0);
+  get HeadWord(): Promise<{word: string, score: number}> {
+    return this.db.tx(async () => {
+      const word = await this.WordAt(0);
+      const score = await this.WordScore(word);
+      return {word, score};
+    });
   }
 
   get MaxScore(): Promise<number> {
@@ -174,6 +178,7 @@ export default class Database implements Interface.Database {
 
   async UpdateScoreAndPos(word: string, score: number, dest: number): Promise<void> {
     return this.db.tx(async () => {
+      console.log({word, score, dest});
       await this.s.updateScore({$word: word, $score: score});
       await this.moveWord(word, dest);
     });
@@ -185,16 +190,16 @@ export default class Database implements Interface.Database {
     });
   }
 
-  WordScore(word: string): Promise<number> {
-    return this.db.tx(() => this.wordScore(word));
-  }
-
-  WordPos(word: string): Promise<number> {
-    return this.db.tx(() => this.wordPos(word));
-  }
-
   async WordAt(pos: number): Promise<string> {
     return (await this.s.selWordAt({...this.focusID, $pos: pos}))?.word as string;
+  }
+
+  async WordScore(word: string): Promise<number> {
+    return await this.selectInt(this.s.selWordScore, {$word: word}, 'score') ?? 0;
+  }
+
+  async WordPos(word: string): Promise<number> {
+    return await this.selectInt(this.s.selWordPos, {...this.focusID, $word: word}, 'pos') ?? 0;
   }
 
   private async maxScore(): Promise<number> {
@@ -206,7 +211,7 @@ export default class Database implements Interface.Database {
   }
 
   private async moveWord($word: string, dest?: number): Promise<void> {
-    const src = await this.wordPos($word)
+    const src = await this.WordPos($word)
     if (src === undefined) {
       throw new RangeError(`${$word} not in queue`);
     }
@@ -227,21 +232,14 @@ export default class Database implements Interface.Database {
     }
   }
 
-  private async selectInt(get: AsyncDB.Get, params: AsyncDB.Params, col: string): Promise<number> {
-    return ((await get(params)) ?? {})[col] as number;
+  private async selectInt(get: AsyncDB.Get, params: AsyncDB.Params, col: string): Promise<number | undefined> {
+    const got = (await get(params)) ?? {};
+    return got[col] as number;
   }
 
   private async setFocus($focus: string): Promise<void> {
     await this.s.insertFocus({$focus});
     const $focusID = (await this.s.selFocusID({$focus}))?.focusID as number;
     this.focusID = {$focusID};
-}
-
-  private wordScore($word: string): Promise<number> {
-    return this.selectInt(this.s.selWordScore, {$word}, 'score');
-  }
-
-  private wordPos($word: string): Promise<number> {
-    return this.selectInt(this.s.selWordPos, {...this.focusID, $word}, 'pos');
   }
 }

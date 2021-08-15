@@ -50,13 +50,27 @@ const createWindow = (): void => {
   }
 
   ipcMain.handle("call", async (_: never, ...params: unknown[]): Promise<unknown> => {
-    const d = await database();
-    return await (d as any)[params[0] as string](...params.slice(1));
+    try {
+      const d = await database();
+      const result = await (d as any)[params[0] as string](...params.slice(1));
+      console.log(params, '==>', result);
+      return {result};
+    } catch (error) {
+      console.log(params, '❌ ==>', error);
+      return {error};
+    }
   });
 
   ipcMain.handle("get", async (_: never, ...params: unknown[]): Promise<unknown> => {
-    const d = await database();
-    return await (d as any)[params[0] as string];
+    try {
+      const d = await database();
+      const result = await (d as any)[params[0] as string];
+      console.log({params, result});
+      return {result};
+    } catch (error) {
+      console.log({params, error});
+      return {error};
+    }
   });
 };
 

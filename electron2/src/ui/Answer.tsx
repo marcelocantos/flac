@@ -4,9 +4,10 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 
-import { inputRE, inputCharRE } from './InputRE';
-
 import refdata from '../refdata/Refdata';
+
+import { inputRE, inputCharRE } from './InputRE';
+import Score from './Score';
 
 const validSyllables = refdata.dict.validSyllables;
 
@@ -22,10 +23,11 @@ const validPrefixes = (() => {
 
 interface AnswerProps {
   word: string;
+  score: number;
   submit: (answer: string) => Promise<string | boolean>;
 }
 
-export default function Answer({word, submit}: AnswerProps): JSX.Element {
+export default function Answer({word, score, submit}: AnswerProps): JSX.Element {
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
 
@@ -68,7 +70,7 @@ export default function Answer({word, submit}: AnswerProps): JSX.Element {
   return (
     <Form>
       <Form.Label htmlFor="answer">
-        Enter the pinyin for <strong>{word}</strong>.
+        Enter the pinyin for <strong>{word}</strong><Score score={score}/>.
       </Form.Label>
       <InputGroup>
         <InputGroup.Text style={{color: "#666"}}>pinyin&nbsp;→</InputGroup.Text>

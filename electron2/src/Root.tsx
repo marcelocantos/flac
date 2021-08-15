@@ -19,19 +19,25 @@ const data = new Database();
 
 export default function App(): JSX.Element {
   const [word, setWord] = useState("");
+  const [score, setScore] = useState(0);
 
   const entry = entries[word];
 
+  async function updateWordAndScore(): Promise<void> {
+    const {word, score} = await data.HeadWord;
+    console.log({word, score});
+    setWord(word);
+    setScore(score);
+  }
+
   useEffect(() => {
-    (async () => {
-      setWord(await data.HeadWord);
-    })();
+    updateWordAndScore();
   })
 
   async function submit(answer: string): Promise<string | boolean> {
     if (answer in entry.entries) {
-      await data.MoveWord(word, 5);
-      setWord(await data.HeadWord);
+      await data.UpdateScoreAndPos(word, 1 + 2*score, 5);
+      await updateWordAndScore();
       return "";
     } else {
       return true;
@@ -47,7 +53,7 @@ export default function App(): JSX.Element {
         <Results log={[]} streak={[]}/>
       </Col>
       <Row className="input">
-        <Answer word={word || "..."} submit={submit}/>
+        <Answer word={word || "..."} score={score} submit={submit}/>
       </Row>
     </Container>
   );
