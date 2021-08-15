@@ -1,5 +1,9 @@
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = [
-  new ForkTsCheckerWebpackPlugin()
+  new ForkTsCheckerWebpackPlugin({
+    typescript: {
+      memoryLimit: 8192,
+    },
+  })
 ];

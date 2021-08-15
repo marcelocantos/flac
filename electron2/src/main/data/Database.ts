@@ -1,4 +1,5 @@
 import * as AsyncDB from './AsyncDB';
+import * as Interface from '../../common/data/Interface';
 
 interface Stmts {
   selMaxScore:    AsyncDB.Get;
@@ -18,7 +19,7 @@ interface Stmts {
   rotateWords2:   AsyncDB.Run;
 }
 
-export default class Database {
+export default class Database implements Interface.Database {
   constructor(
     public focusID: {$focusID: number},
     public db: AsyncDB.Database,
@@ -192,15 +193,15 @@ export default class Database {
     return (await this.s.selWordAt({...this.focusID, $pos}))?.word as string;
   }
 
-  async maxScore(): Promise<number> {
+  private async maxScore(): Promise<number> {
     return (await this.s.selMaxScore())?.maxScore as number;
   }
 
-  async maxPos(): Promise<number> {
+  private async maxPos(): Promise<number> {
     return (await this.s.selMaxPos(this.focusID))?.maxPos as number;
   }
 
-  async moveWord($word: string, dest?: number): Promise<void> {
+  private async moveWord($word: string, dest?: number): Promise<void> {
     const src = await this.wordPos($word)
     if (src === undefined) {
       throw new RangeError(`${$word} not in queue`);
@@ -214,7 +215,7 @@ export default class Database {
     await this.s.rotateWords2(this.focusID);
   }
 
-  async removeWords(words: string[]): Promise<void> {
+  private async removeWords(words: string[]): Promise<void> {
     const max = await this.maxPos() || 0;
     for (const $word of words) {
       await this.moveWord($word, max)
@@ -222,15 +223,15 @@ export default class Database {
     }
   }
 
-  async selectInt(get: AsyncDB.Get, params: AsyncDB.Params, col: string): Promise<number> {
+  private async selectInt(get: AsyncDB.Get, params: AsyncDB.Params, col: string): Promise<number> {
     return ((await get(params)) ?? {})[col] as number;
   }
 
-  wordScore($word: string): Promise<number> {
+  private wordScore($word: string): Promise<number> {
     return this.selectInt(this.s.selWordScore, {$word}, 'score');
   }
 
-  wordPos($word: string): Promise<number> {
+  private wordPos($word: string): Promise<number> {
     return this.selectInt(this.s.selWordPos, {...this.focusID, $word}, 'pos');
   }
 }

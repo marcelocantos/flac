@@ -22,7 +22,7 @@ const validPrefixes = (() => {
 
 interface AnswerProps {
   word: string;
-  submit: (answer: string) => string | boolean;
+  submit: (answer: string) => Promise<string | boolean>;
 }
 
 export default function Answer({word, submit}: AnswerProps): JSX.Element {
@@ -53,10 +53,10 @@ export default function Answer({word, submit}: AnswerProps): JSX.Element {
     setInput(e.target.value);
   }
 
-  function onClick(e: React.MouseEvent<HTMLElement>) {
+  async function onClick(e: React.MouseEvent<HTMLElement>) {
     e.preventDefault();
     const current = answer.current;
-    const result = submit(current.value);
+    const result = await submit(current.value);
     if (typeof result === "string") {
       setInput(result);
     } else {

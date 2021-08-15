@@ -49,9 +49,14 @@ const createWindow = (): void => {
     mainWindow.webContents.openDevTools();
   }
 
-  ipcMain.handle("data", async () => {
+  ipcMain.handle("call", async (_: never, ...params: unknown[]): Promise<unknown> => {
     const d = await database();
-    return await d.HeadWord;
+    return await (d as any)[params[0] as string](...params.slice(1));
+  });
+
+  ipcMain.handle("get", async (_: never, ...params: unknown[]): Promise<unknown> => {
+    const d = await database();
+    return await (d as any)[params[0] as string];
   });
 };
 

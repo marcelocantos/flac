@@ -9,15 +9,13 @@ import Answer from './ui/Answer';
 
 import refdata from './refdata/Refdata';
 
+import { Database } from './renderer/data/Proxy';
+
 import './Root.css';
 
 const entries = refdata.dict.entries;
 
-type MyWindow = typeof window & {
-  api: {
-    call: (channel: string, ...args: unknown[]) => unknown,
-  },
-};
+const data = new Database();
 
 export default function App(): JSX.Element {
   const [word, setWord] = useState("");
@@ -26,14 +24,14 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     (async () => {
-      const n = await (window as MyWindow).api.call("data");
-      setWord(n as string);
+      setWord(await data.HeadWord);
     })();
   })
 
-  function submit(answer: string): string | boolean {
+  async function submit(answer: string): Promise<string | boolean> {
     if (answer in entry.entries) {
-      // setWordIndex(wordIndex + 1);
+      await data.MoveWord(word, 5);
+      setWord(await data.HeadWord);
       return "";
     } else {
       return true;
