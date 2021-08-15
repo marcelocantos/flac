@@ -12,7 +12,6 @@ import refdata from './refdata/Refdata';
 import './Root.css';
 
 const entries = refdata.dict.entries;
-const words = refdata.wordList.words;
 
 type MyWindow = typeof window & {
   api: {
@@ -21,22 +20,20 @@ type MyWindow = typeof window & {
 };
 
 export default function App(): JSX.Element {
-  const [num, setNum] = useState(0);
-  const [wordIndex, setWordIndex] = useState(0);
+  const [word, setWord] = useState("");
 
-  const word = words[wordIndex];
   const entry = entries[word];
 
   useEffect(() => {
     (async () => {
       const n = await (window as MyWindow).api.call("data");
-      setNum(n as number);
+      setWord(n as string);
     })();
   })
 
   function submit(answer: string): string | boolean {
     if (answer in entry.entries) {
-      setWordIndex(wordIndex + 1);
+      // setWordIndex(wordIndex + 1);
       return "";
     } else {
       return true;
@@ -46,13 +43,13 @@ export default function App(): JSX.Element {
   return (
     <Container fluid className="Container">
       <Row>
-        <p className="welcome">欢迎来到flac，我们一起学中文吧！{num}</p>
+        <p className="welcome">欢迎来到flac，我们一起学中文吧！</p>
       </Row>
       <Col className="main">
         <Results log={[]} streak={[]}/>
       </Col>
       <Row className="input">
-        <Answer word={word} submit={submit}/>
+        <Answer word={word || "..."} submit={submit}/>
       </Row>
     </Container>
   );
