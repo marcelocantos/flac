@@ -28,9 +28,9 @@ it('bad inputs', () => {
 
 function lex(src: string): string {
 	const tokenses = Lex(src);
-	let parts: string[] = [];
+	const parts: string[] = [];
 	for (const tokens of tokenses) {
-		let chars: string[] = [];
+		const chars: string[] = [];
 		for (const token of tokens.tokens) {
 			chars.push(token.string);
 		}

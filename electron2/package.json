@@ -82,6 +82,7 @@
     "@types/node": "^16.6.1",
     "@types/react": "^17.0.17",
     "@types/react-dom": "^17.0.9",
+    "@types/sqlite3": "^3.1.7",
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
@@ -106,6 +107,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "react": "^17.0.2",
     "react-bootstrap": "^1.6.1",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "sqlite3": "^5.0.2"
   }
 }
