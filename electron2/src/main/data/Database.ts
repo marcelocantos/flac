@@ -117,7 +117,7 @@ export default class Database implements Interface.Database {
     );
 
     await db.tx(async () => {
-      await d.SetFocus(focus);
+      await d.setFocus(focus);
 
       let maxPos = await d.maxPos() || -1;
       const positions: {[word: string]: number} = {};
@@ -166,31 +166,35 @@ export default class Database implements Interface.Database {
     return this.db.tx(() => this.moveWord(word, dest));
   }
 
-  async UpdateScore($word: string, $score: number): Promise<void> {
-    await this.s.updateScore({$word, $score});
+  async UpdateScore(word: string, score: number): Promise<void> {
+    return this.db.tx(async () => {
+      await this.s.updateScore({$word: word, $score: score});
+    });
   }
 
-  async UpdateScoreAndPos($word: string, $score: number, $dest: number): Promise<void> {
-    await this.UpdateScore($word, $score);
-    await this.moveWord($word, $dest);
+  async UpdateScoreAndPos(word: string, score: number, dest: number): Promise<void> {
+    return this.db.tx(async () => {
+      await this.s.updateScore({$word: word, $score: score});
+      await this.moveWord(word, dest);
+    });
   }
 
-  async SetFocus($focus: string): Promise<void> {
-    await this.s.insertFocus({$focus});
-    const $focusID = (await this.s.selFocusID({$focus}))?.focusID as number;
-    this.focusID = {$focusID};
+  async SetFocus(focus: string): Promise<void> {
+    return this.db.tx(async () => {
+      await this.setFocus(focus);
+    });
   }
 
-  WordScore($word: string): Promise<number> {
-    return this.db.tx(() => this.wordScore($word));
+  WordScore(word: string): Promise<number> {
+    return this.db.tx(() => this.wordScore(word));
   }
 
-  WordPos($word: string): Promise<number> {
-    return this.db.tx(() => this.wordPos($word));
+  WordPos(word: string): Promise<number> {
+    return this.db.tx(() => this.wordPos(word));
   }
 
-  async WordAt($pos: number): Promise<string> {
-    return (await this.s.selWordAt({...this.focusID, $pos}))?.word as string;
+  async WordAt(pos: number): Promise<string> {
+    return (await this.s.selWordAt({...this.focusID, $pos: pos}))?.word as string;
   }
 
   private async maxScore(): Promise<number> {
@@ -226,6 +230,12 @@ export default class Database implements Interface.Database {
   private async selectInt(get: AsyncDB.Get, params: AsyncDB.Params, col: string): Promise<number> {
     return ((await get(params)) ?? {})[col] as number;
   }
+
+  private async setFocus($focus: string): Promise<void> {
+    await this.s.insertFocus({$focus});
+    const $focusID = (await this.s.selFocusID({$focus}))?.focusID as number;
+    this.focusID = {$focusID};
+}
 
   private wordScore($word: string): Promise<number> {
     return this.selectInt(this.s.selWordScore, {$word}, 'score');

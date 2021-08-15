@@ -52,27 +52,27 @@ export class Database implements Interface.Database {
     return this.bridge.call<void>("MoveWord", word, dest);
   }
 
-  UpdateScore($word: string, $score: number): Promise<void> {
-    return this.bridge.call<void>("UpdateScore", $word, $score);
+  UpdateScore(word: string, score: number): Promise<void> {
+    return this.bridge.call<void>("UpdateScore", word, score);
   }
 
-  UpdateScoreAndPos($word: string, $score: number, $dest: number): Promise<void> {
-    return this.bridge.call<void>("UpdateScoreAndPos", $word, $dest);
+  UpdateScoreAndPos(word: string, score: number, dest: number): Promise<void> {
+    return this.bridge.call<void>("UpdateScoreAndPos", word, dest);
   }
 
-  SetFocus($focus: string): Promise<void> {
-    return this.bridge.call<void>("SetFocus", $focus);
+  SetFocus(focus: string): Promise<void> {
+    return this.bridge.call<void>("SetFocus", focus);
   }
 
-  WordScore($word: string): Promise<number> {
-    return this.bridge.call<number>("WordScore", $word);
+  WordScore(word: string): Promise<number> {
+    return this.bridge.call<number>("WordScore", word);
   }
 
-  WordPos($word: string): Promise<number> {
-    return this.bridge.call<number>("WordPos", $word);
+  WordPos(word: string): Promise<number> {
+    return this.bridge.call<number>("WordPos", word);
   }
 
-  WordAt($pos: number): Promise<string> {
-    return this.bridge.call<string>("WordAt", $pos);
+  WordAt(pos: number): Promise<string> {
+    return this.bridge.call<string>("WordAt", pos);
   }
 }
