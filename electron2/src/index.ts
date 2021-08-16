@@ -53,10 +53,10 @@ const createWindow = (): void => {
     try {
       const d = await database();
       const result = await (d as any)[params[0] as string](...params.slice(1));
-      console.log(params, '==>', result);
+      console.log('call', params, '=>', result);
       return {result};
     } catch (error) {
-      console.log(params, '❌ ==>', error);
+      console.log('❌ call', params, ' =>', error);
       return {error};
     }
   });
@@ -65,10 +65,10 @@ const createWindow = (): void => {
     try {
       const d = await database();
       const result = await (d as any)[params[0] as string];
-      console.log({params, result});
+      console.log('get', params[0], '=>', result);
       return {result};
     } catch (error) {
-      console.log({params, error});
+      console.log('❌ get', params[0], ' =>', error);
       return {error};
     }
   });
