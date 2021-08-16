@@ -13,6 +13,8 @@ import { Database } from './renderer/data/Proxy';
 
 import './Root.css';
 
+const log = true;
+
 const entries = refdata.dict.entries;
 
 const data = new Database();
@@ -25,9 +27,9 @@ export default function App(): JSX.Element {
 
   async function updateWordAndScore(): Promise<void> {
     const {word, score} = await data.HeadWord;
-    console.log({word, score});
+    if (log) console.log({word, score});
     setWord(word);
-    setScore(score);
+    setScore(score ?? 0);
   }
 
   useEffect(() => {

@@ -8,26 +8,28 @@ export type All = (params?: Params) => Promise<Row[]>;
 export type Get = (params?: Params) => Promise<Row | undefined>;
 export type Run = (params?: Params) => Promise<Result>;
 
+const log = false;
+
 function promise<T>(
   obj: unknown,
   method: string,
   descr: string,
   ...params: (Params | string)[]
 ): Promise<T> {
-  let log = false;
-  if (params.length > 0 && typeof params[0] !== "string") {
-    log = params[0] && 'LOG' in params[0];
-    if (log) {
+  let llog = false;
+  if (log && params.length > 0 && typeof params[0] !== "string") {
+    llog = params[0] && 'LOG' in params[0];
+    if (llog) {
       delete params[0].LOG;
     }
   }
   return new Promise((resolve, reject) => {
     (obj as any)[method](...params, (error: unknown, result: unknown) => {
       if (error) {
-        !log || console.log({obj, method, descr, params, error});
+        if (llog) console.log({obj, method, descr, params, error});
         reject(error);
       } else {
-        !log || console.log({obj, method, descr, params, result});
+        if (llog) console.log({obj, method, descr, params, result});
         resolve(result as T);
       }
     })

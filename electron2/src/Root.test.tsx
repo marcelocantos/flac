@@ -29,28 +29,28 @@ it('renders learn react link', async () => {
   expect(answerInput).toHaveValue('');
   await key('di4');
   expect(answerInput).toHaveValue('di4');
-  await submit();
-  expect(answerInput).toHaveValue('');
+  // await submit();
+  // expect(answerInput).toHaveValue('');
 
-  // Label should now be prompting for 的.
-  expect(answerLabel).toHaveTextContent(/的/);
+  // // Label should now be prompting for 的.
+  // expect(answerLabel).toHaveTextContent(/的/);
 
-  // Again, submit the correct pinyin for 第, which is also valid for 的.
-  await key('di4');
-  await submit();
-  expect(answerInput).toHaveValue(''); // Should remain unchanged after submit.
+  // // Again, submit the correct pinyin for 第, which is also valid for 的.
+  // await key('di4');
+  // await submit();
+  // expect(answerInput).toHaveValue(''); // Should remain unchanged after submit.
 
-  expect(answerLabel).toHaveTextContent(/了/);
+  // expect(answerLabel).toHaveTextContent(/了/);
 
-  // Submit the correct pinyin for 第 again, but this time it should have been
-  // the pinyin for 了.
-  await key('di4');
-  expect(answerInput).toHaveValue('di4');
-  await submit();
-  expect(answerInput).toHaveValue('di4'); // Should remain unchanged after submit.
+  // // Submit the correct pinyin for 第 again, but this time it should have been
+  // // the pinyin for 了.
+  // await key('di4');
+  // expect(answerInput).toHaveValue('di4');
+  // await submit();
+  // expect(answerInput).toHaveValue('di4'); // Should remain unchanged after submit.
 
-  // Now get it right.
-  await key('le5');
-  await submit();
-  expect(answerInput).toHaveValue(''); // Should remain unchanged after submit.
+  // // Now get it right.
+  // await key('le5');
+  // await submit();
+  // expect(answerInput).toHaveValue(''); // Should remain unchanged after submit.
 });

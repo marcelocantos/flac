@@ -130,7 +130,6 @@ export default class Database implements Interface.Database {
           await d.s.enqueueWord({...d.focusID, $pos: wordPos, $word});
         }
         positions[$word] = wordPos;
-        // console.log({queue: await d.selQueuedWords({...d.focusID})});
       }
 
       const remove: string[] = [];
@@ -150,7 +149,7 @@ export default class Database implements Interface.Database {
     await this.db.close();
   }
 
-  get HeadWord(): Promise<{word: string, score: number}> {
+  get HeadWord(): Promise<{word: string, score?: number} | undefined> {
     return this.db.tx(async () => {
       const word = await this.WordAt(0);
       const score = await this.WordScore(word);
@@ -158,11 +157,11 @@ export default class Database implements Interface.Database {
     });
   }
 
-  get MaxScore(): Promise<number> {
+  get MaxScore(): Promise<number | undefined> {
     return this.maxScore();
   }
 
-  get MaxPos(): Promise<number> {
+  get MaxPos(): Promise<number | undefined> {
     return this.maxPos();
   }
 
@@ -178,7 +177,6 @@ export default class Database implements Interface.Database {
 
   async UpdateScoreAndPos(word: string, score: number, dest: number): Promise<void> {
     return this.db.tx(async () => {
-      console.log({word, score, dest});
       await this.s.updateScore({$word: word, $score: score});
       await this.moveWord(word, dest);
     });
@@ -190,16 +188,16 @@ export default class Database implements Interface.Database {
     });
   }
 
-  async WordAt(pos: number): Promise<string> {
+  async WordAt(pos: number): Promise<string | undefined> {
     return (await this.s.selWordAt({...this.focusID, $pos: pos}))?.word as string;
   }
 
-  async WordScore(word: string): Promise<number> {
-    return await this.selectInt(this.s.selWordScore, {$word: word}, 'score') ?? 0;
+  async WordScore(word: string): Promise<number | undefined> {
+    return await this.selectInt(this.s.selWordScore, {$word: word}, 'score');
   }
 
-  async WordPos(word: string): Promise<number> {
-    return await this.selectInt(this.s.selWordPos, {...this.focusID, $word: word}, 'pos') ?? 0;
+  async WordPos(word: string): Promise<number | undefined> {
+    return await this.selectInt(this.s.selWordPos, {...this.focusID, $word: word}, 'pos');
   }
 
   private async maxScore(): Promise<number> {
