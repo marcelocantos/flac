@@ -1,7 +1,7 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import Root from './Root';
+import Root from './ui/Root';
 
 function render() {
   ReactDOM.render(

@@ -4,12 +4,12 @@ import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 
-import 结果清单 from './ui/Results';
-import 回答 from './ui/Answer';
+import 结果清单 from './Results';
+import 回答 from './Answer';
 
-import refdata from './refdata/Refdata';
+import refdata from '../refdata/Refdata';
 
-import { Database } from './renderer/data/Proxy';
+import { Database } from '../renderer/data/Proxy';
 
 import './Root.css';
 
