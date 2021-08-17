@@ -1,7 +1,7 @@
 .汉和拼音字 {
     display: inline-flex;
     vertical-align: baseline;
-    border: 1px solid rgb(230, 230, 230);
+    border: 1px solid rgb(0, 0, 0, 0.1);
     border-radius: 4px;
 }
 
@@ -11,10 +11,19 @@
 }
 
 .汉和拼音字 > .拼音 {
-    background-color: rgb(230, 230, 230);
+    background-color: rgb(0, 0, 0, 0.1);
     padding: 0 0.3em;
 }
 
 .定义弹出框 {
     max-width: 550px;
+    background-color: #f4f4f4;
+}
+
+.定义弹出框 .popover-body {
+    padding: 0;
+}
+
+.定义弹出框 .popover-arrow::after {
+    border-top-color: #f4f4f4;
 }
