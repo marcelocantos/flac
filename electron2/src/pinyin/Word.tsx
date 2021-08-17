@@ -1,20 +1,25 @@
 import React from 'react';
 import Pinyin from './Pinyin';
 
+interface WordProps {
+  word: Word | string | Pinyin[];
+  [attrs: string]: unknown;
+}
+
 export default class Word {
   readonly chars: Pinyin[];
 
-  constructor(chars: string | Pinyin[]) {
-    if (typeof chars === "string") {
+  constructor(word: string | Pinyin[]) {
+    if (typeof word === "string") {
       const arr: Pinyin[] = [];
-      while (chars !== "") {
-        const p = new Pinyin(chars);
-        chars = chars.slice(p.consumed);
+      while (word !== "") {
+        const p = new Pinyin(word);
+        word = word.slice(p.consumed);
         arr.push(p);
       }
       this.chars = arr;
     } else {
-      this.chars = chars;
+      this.chars = word;
     }
   }
 
@@ -22,8 +27,19 @@ export default class Word {
   get pinyin(): string { return this.chars.map(c => c.pinyin).join(' '); }
   get raw   (): string { return this.chars.map(c => c.raw   ).join(' '); }
 
-  get html(): JSX.Element {
-    return <span>{this.chars.map(c => c.html)}</span>;
+  html(props: {[attrs: string]: unknown}): JSX.Element {
+    return (
+      <React.Fragment {...props}>
+        {this.chars.map((c, i) => c.html({key: i}))}
+      </React.Fragment>
+    );
+  }
+
+  static HTML({word, ...props}: WordProps): JSX.Element {
+    if (!(word instanceof Word)) {
+      word = new Word(word);
+    }
+    return word.html(props);
   }
 
   static compare(a: Word, b: Word): number {

@@ -1,0 +1,34 @@
+import React from 'react';
+
+import { shallow, configure } from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+
+import { 定义 } from './装饰';
+
+configure({adapter: new Adapter()});
+
+it('decorate phrase', () => {
+	// const colorRE = /<(\w+)\((.*?)\)>/;
+	// c := func(s string) string {
+	// 	return colorRE.ReplaceAllString(s, "[$1::b]$2[-::-]")
+	// }
+	expect(shallow(<Definition def="CL:個|个[ge4]"/>))
+		.toEqual(<>🆑:个[<span>gè</span>]</>);
+	// expect().toEqual()
+	// 	c("🆑:个[<purple(gè)>],种[<blue(zhǒng)>]"),
+	// 	DecorateDefinition("CL:個|个[ge4],種|种[zhong3]"))
+	// expect().toEqual()
+	// 	c("🆑:门[<green(mén)>],种[<blue(zhǒng)>],项[<purple(xiàng)>]"),
+	// 	DecorateDefinition("CL:門|门[men2],種|种[zhong3],項|项[xiang4]"))
+
+	// // classifier for ...
+	// expect().toEqual()
+	// 	c("令 令 [<blue(lǐng)>] /🆑➤ a ream of paper/"),
+	// 	DecorateDefinition("令 令 [ling3] /classifier for a ream of paper/"))
+	// expect().toEqual()
+	// 	c("味 味 [<purple(wèi)>] /taste/smell/(fig.) (noun suffix) feel/"+
+	// 		"quality/sense/(TCM) 🆑➤ ingredients of a medicine prescription/"),
+	// 	DecorateDefinition(
+	// 		"味 味 [wei4] /taste/smell/(fig.) (noun suffix) feel/quality/sense/"+
+	// 			"(TCM) classifier for ingredients of a medicine prescription/"))
+});

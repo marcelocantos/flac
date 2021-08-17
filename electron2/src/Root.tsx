@@ -4,8 +4,8 @@ import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 
-import Results from './ui/Results';
-import Answer from './ui/Answer';
+import 结果清单 from './ui/Results';
+import 回答 from './ui/Answer';
 
 import refdata from './refdata/Refdata';
 
@@ -52,10 +52,10 @@ export default function App(): JSX.Element {
         <p className="welcome">欢迎来到flac，我们一起学中文吧！</p>
       </Row>
       <Col className="main">
-        <Results log={[]} streak={[]}/>
+        <结果清单 log={[]} streak={[]}/>
       </Col>
       <Row className="input">
-        <Answer word={word || "..."} score={score} submit={submit}/>
+        <回答 字={word || "..."} 分数={score} 提交={submit}/>
       </Row>
     </Container>
   );

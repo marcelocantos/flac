@@ -1,6 +1,9 @@
 import React from 'react';
-import Word from './Word';
+
+import Delim from '../reactutil/Delim';
+
 import Pinyin from './Pinyin';
+import Word from './Word';
 
 const pinyinsRE = /^([a-zü]+)([1-5]+)$/i;
 
@@ -38,7 +41,7 @@ export default class Alts {
   get raw   (): string { return this.words.map(w => w.raw   ).join('/'); }
 
   get html(): JSX.Element {
-    return <span>{this.words.map((c, i) => <>{i ? '/' : ''}{c.html}</>)}</span>;
+    return <Delim list={this.words.map(w => w.html)} delim=", "/>;
   }
 
   static compare(a: Alts, b: Alts): number {

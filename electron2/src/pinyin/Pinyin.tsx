@@ -2,14 +2,7 @@ import React from 'react';
 
 import PinyinRE from './PinyinRE';
 
-const toneColors: string[] = [
-  '',
-  'red',
-  'green',
-  'blue',
-  'purple',
-  'black',
-];
+import './Pinyin.css';
 
 const baseVowels = 'AEIOUÜaeiouü';
 
@@ -22,6 +15,11 @@ const mark: ((v: string) => string)[] = [
   baseVowels,
 ].map(vowels => (v: string) => vowels[baseVowels.indexOf(v)] ?? '')
 
+interface PinyinProps {
+  pinyin: Pinyin | string | {syllable: string, tone: number};
+  [attr: string]: unknown;
+}
+
 export default class Pinyin {
   readonly pinyin: string;
   readonly syllable: string;
@@ -29,20 +27,20 @@ export default class Pinyin {
   readonly raw: string;
   readonly consumed?: number;
 
-  constructor(arg: string | {syllable: string, tone: number}) {
-    if (typeof arg === 'string') {
-      const groups = PinyinRE.exec(arg);
+  constructor(pinyin: string | {syllable: string, tone: number}) {
+    if (typeof pinyin === 'string') {
+      const groups = PinyinRE.exec(pinyin);
       if (groups == null || (!groups[1] && groups[3].length > 1)) {
-        throw new Error(`${arg}: invalid pinyin`);
+        throw new Error(`${pinyin}: invalid pinyin`);
       }
       this.consumed = groups[0].length;
-      arg = {
+      pinyin = {
         syllable: groups[2].replace('v', 'ü').replace('u:', 'ü'),
         tone: Number.parseInt(groups[3]),
       }
     }
 
-    const {syllable, tone} = arg;
+    const {syllable, tone} = pinyin;
 
     // https://en.wikipedia.org/wiki/Pinyin#Rules_for_placing_the_tone_mark
     this.pinyin   = syllable.replace(/[aeo]|(?<=i)u|(?<=u)i|[iuü]/i, mark[tone]);
@@ -51,10 +49,16 @@ export default class Pinyin {
     this.raw      = `${this.syllable}${this.tone}`;
   }
 
-  get color (): string { return toneColors[this.tone]; }
+  html(props: {[attr: string]: unknown}): JSX.Element {
+    return <span {...props} className={`拼音 拼音调${this.tone}`}>{this.pinyin}</span>;
+  }
 
-  get html(): JSX.Element {
-    return <span style={{color: this.color}}>{this.pinyin}</span>;
+  static HTML({pinyin, ...props}: PinyinProps): JSX.Element {
+    if (!(pinyin instanceof Pinyin)) {
+      pinyin = new Pinyin(pinyin);
+    }
+    // Force typecast because type-narrowing failed.
+    return (pinyin as Pinyin).html(props);
   }
 
   static compare(a: Pinyin, b: Pinyin): number {

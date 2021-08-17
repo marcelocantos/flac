@@ -37,9 +37,18 @@ p.welcome {
   font-size: larger;
 }
 
-.form-label > strong {
+.字 {
   font-weight: 500;
   color: rgb(22, 122, 223);
+}
+
+.定义序数词 {
+  font-weight: bold;
+  margin-right: 0.1em;
+}
+
+.定义清单 td {
+  vertical-align: top;
 }
 
 /* .App {

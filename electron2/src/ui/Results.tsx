@@ -5,7 +5,7 @@ interface Props {
     streak: string[];
 }
 
-export default function Results({log, streak}: Props): JSX.Element {
+export default function 结果清单({log, streak}: Props): JSX.Element {
     return (
         <div>
             {log.map(e => <div>{e}</div>)}

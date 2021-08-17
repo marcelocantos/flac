@@ -1,0 +1,20 @@
+.汉和拼音字 {
+    display: inline-flex;
+    vertical-align: baseline;
+    border: 1px solid rgb(230, 230, 230);
+    border-radius: 4px;
+}
+
+.汉和拼音字 > .汉 {
+    font-weight: 500;
+    padding: 0 0.3em;
+}
+
+.汉和拼音字 > .拼音 {
+    background-color: rgb(230, 230, 230);
+    padding: 0 0.3em;
+}
+
+.定义弹出框 {
+    max-width: 550px;
+}

@@ -1,0 +1,25 @@
+.拼音 {
+    font-weight: 600;
+    padding-left: 0.05em;
+    padding-right: 0.05em;
+}
+
+.拼音调1 {
+    color: red;
+}
+
+.拼音调2 {
+    color: rgb(0, 173, 0);
+}
+
+.拼音调3 {
+    color: rgb(19, 93, 255);
+}
+
+.拼音调4 {
+    color: #b100d0;
+}
+
+.拼音调5 {
+    color: gray;
+}

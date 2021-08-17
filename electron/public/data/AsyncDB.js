@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3');
 
 function promise(obj, method, descr, ...params) {
-  const log = true;
+  const log = false;
   // const log = params.length > 0 && params[0].LOG;
   // if (log) {
   //   delete params[0].LOG;

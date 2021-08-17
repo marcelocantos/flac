@@ -103,7 +103,7 @@ function expectMatch(pattern: string) {
     const all = e[1] + e[2] + e[3];
     const expected = e[2];
 
-    const m = all.match(InputRE.inputRE);
+    const m = all.match(InputRE.输入RE);
     expect(m).not.toBeUndefined();
     if (m) {
       expect(m[1]).toEqual(expected);
@@ -112,6 +112,6 @@ function expectMatch(pattern: string) {
 }
 
 function expectNoMatch(input: string) {
-  const e = input.match(InputRE.inputRE);
+  const e = input.match(InputRE.输入RE);
   expect(e).not.toBeUndefined();
 }

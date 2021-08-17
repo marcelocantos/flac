@@ -6,8 +6,9 @@ import InputGroup from 'react-bootstrap/InputGroup';
 
 import refdata from '../refdata/Refdata';
 
-import { inputRE, inputCharRE } from './InputRE';
-import Score from './Score';
+import { 输入RE, 输入字RE } from './InputRE';
+import 汉字 from './Word';
+import { 条目清单 } from './Decorate';
 
 const validSyllables = refdata.dict.validSyllables;
 
@@ -21,24 +22,24 @@ const validPrefixes = (() => {
   return ret
 })();
 
-interface AnswerProps {
-  word: string;
-  score: number;
-  submit: (answer: string) => Promise<string | boolean>;
+interface 回答特性 {
+  字: string;
+  分数: number;
+  提交: (回答: string) => Promise<string | boolean>;
 }
 
-export default function Answer({word, score, submit}: AnswerProps): JSX.Element {
-  const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+export default function 回答({字, 分数, 提交}: 回答特性): JSX.Element {
+  const [输入, 设置输入] = useState("");
+  const [错误, 设置错误] = useState(false);
 
-  const answer = useRef(null);
+  const 回答 = useRef(null);
 
-  function accept(text: string): boolean {
-    const m = text.match(inputRE);
+  function 接受(文字: string): boolean {
+    const m = 文字.match(输入RE);
     if (!m || !validPrefixes.has(m[2])) {
       return false;
     }
-    for (const [, m] of text.matchAll(inputCharRE)) {
+    for (const [, m] of 文字.matchAll(输入字RE)) {
       if (!validPrefixes.has(m)) {
         return false;
       }
@@ -46,53 +47,54 @@ export default function Answer({word, score, submit}: AnswerProps): JSX.Element 
     return true;
   }
 
-  function checkInput(e: React.ChangeEvent<any>) {
-    const value = e.target.value as string;
-    const accepted = !!value && accept(value);
-    const error = !!value && !accepted;
+  function 检查输入(e: React.ChangeEvent<any>) {
+    const 值 = e.target.value as string;
+    const 接受的 = !!值 && 接受(值);
+    const 错误 = !!值 && !接受的;
 
-    setError(error);
-    setInput(e.target.value);
+    设置错误(错误);
+    设置输入(e.target.value);
   }
 
   async function onClick(e: React.MouseEvent<HTMLElement>) {
     e.preventDefault();
-    const current = answer.current;
-    const result = await submit(current.value);
-    if (typeof result === "string") {
-      setInput(result);
+    const 当前 = 回答.current;
+    const 结果 = await 提交(当前.value);
+    if (typeof 结果 === "string") {
+      设置输入(结果);
     } else {
-      setError(result);
+      设置错误(结果);
     }
-    current.focus();
+    当前.focus();
   }
 
   return (
     <Form>
-      <Form.Label htmlFor="answer">
-        Enter the pinyin for <strong>{word}</strong><Score score={score}/>.
+      <Form.Label htmlFor="回答">
+        Enter the pinyin for{' '}
+        <汉字 字={字} 分数={分数} 定义={<条目清单 清单={refdata.dict.entries[字]}/>}/>.
       </Form.Label>
       <InputGroup>
-        <InputGroup.Text style={{color: "#666"}}>pinyin&nbsp;→</InputGroup.Text>
+        <InputGroup.Text style={{color: "#666"}}>拼音 →</InputGroup.Text>
         <Form.Control
-          id="answer"
-          ref={answer}
-          isInvalid={error}
+          id="回答"
+          ref={回答}
+          isInvalid={错误}
           autoFocus={true}
-          value={input}
-          onChange={checkInput}
+          value={输入}
+          onChange={检查输入}
           size="lg"
           spellCheck={false}
-          aria-label="answer"
+          aria-label="回答"
           aria-describedby="input"
         />
         <Button
-            disabled={!/\d$/.test(input) || error}
+            disabled={!/\d$/.test(输入) || 错误}
             type="submit"
             onClick={onClick}
             tabIndex={-1}
           >
-          Submit
+          提交
         </Button>
       </InputGroup>
     </Form>
