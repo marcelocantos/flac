@@ -154,7 +154,15 @@ scanning:
 				entries.Entries[answer] = entry
 			}
 
-			entry.Definitions = append(entry.Definitions, strings.Split(defs, "/")...)
+		addingDefs:
+			for _, def := range strings.Split(defs, "/") {
+				for _, existing := range entry.Definitions {
+					if def == existing {
+						continue addingDefs
+					}
+				}
+				entry.Definitions = append(entry.Definitions, def)
+			}
 			simps, has := cedict.PinyinToSimplified[word.RawString()]
 			if !has {
 				simps = &refdata_pb.CEDict_Words{}
