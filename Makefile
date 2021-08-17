@@ -5,7 +5,7 @@ empty :=
 space := $(empty) $(empty)
 
 REFDATA_PB = internal/pkg/proto/refdata_pb/refdata.pb.go
-REFDATA_JSON = electron2/src/refdata/refdata.json
+REFDATA_JSON = electron/src/refdata/refdata.json
 
 # addenda.txt must come second, so its removals get applied.
 REFDATA_SRCS = \
