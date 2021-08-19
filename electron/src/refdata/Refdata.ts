@@ -1,13 +1,15 @@
 import refdata from './refdata.json';
 
-export type Entries = {
-  entries: {[key: string]: {
-    definitions: string[],
-  }},
-  traditional: string,
-};
+export interface Definitions {
+  definitions: string[];
+}
 
-export type Refdata = {
+export interface Entries {
+  entries: {[key: string]: Definitions};
+  traditional: string;
+}
+
+export interface Refdata {
   dict: {
     ambiguousWords: {[key: string]: boolean},
     entries: {[key: string]: Entries},
@@ -16,11 +18,11 @@ export type Refdata = {
     }},
     traditionalToSimplified: {[key: string]: string},
     validSyllables: {[key: string]: boolean},
-  }
+  };
   wordList: {
     words: string[],
     frequencies: {[key: string]: number},
-  },
-};
+  };
+}
 
 export default refdata as Refdata;

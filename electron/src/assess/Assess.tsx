@@ -10,6 +10,7 @@ export default function Assess(
 	entries: Entries,
 	answer: string,
 ): Outcome {
+	console.log({word, entries, answer});
 	const o = new Outcome(word, entries);
 	const answerAlts = AnswerAlts(word, answer);
 	if (answerAlts.length > 0) {

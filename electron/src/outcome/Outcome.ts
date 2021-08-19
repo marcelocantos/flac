@@ -1,10 +1,9 @@
-import React from 'react';
-
 import Alts from '../pinyin/Alts';
 import Word from '../pinyin/Word';
 import { Entries } from '../refdata/Refdata';
 
 export default class Outcome {
+  html?: ({分数}: {分数: number}) => JSX.Element;
   Good:     Word[] = [];
 	Bad:      Word[] = [];
 	TooShort: Word[] = [];
@@ -17,16 +16,12 @@ export default class Outcome {
     public Entries: Entries,
   ){}
 
-  get Pass(): boolean {
+  get 及格(): boolean {
     return this.Bad.length + this.TooShort.length + this.BadTones.length + this.Missing === 0;
   }
 
-  get Fail(): boolean {
+  get 不及格(): boolean {
     return this.Bad.length + this.BadTones.length > 0;
-  }
-
-  get Correction(): JSX.Element {
-    return <>{this.Word} = {this.WordAlts.html}</>;
   }
 
   get WordAlts(): Alts {
