@@ -1,5 +1,7 @@
 import * as sqlite3 from 'sqlite3';
 
+import { Mutex } from 'async-mutex';
+
 export type Params = {[_: string]: unknown};
 export type Row = {[_: string]: unknown};
 export type Result = {[_: string]: unknown};
@@ -75,6 +77,7 @@ export class Statement {
 
 export class Database {
   stmts: Statement[] = [];
+  mutex = new Mutex();
 
   constructor(
     public db: sqlite3.Database,
@@ -134,14 +137,19 @@ export class Database {
   }
 
   async tx<T>(cb: () => Promise<T>): Promise<T> {
-    await this.run("BEGIN");
+    const release = await this.mutex.acquire();
     try {
-      const ret = await cb();
-      await this.run("COMMIT");
-      return ret;
-    } catch (error) {
-      await this.run("ROLLBACK");
-      throw error;
+      await this.run("BEGIN");
+      try {
+        const ret = await cb();
+        await this.run("COMMIT");
+        return ret;
+      } catch (error) {
+        await this.run("ROLLBACK");
+        throw error;
+      }
+    } finally {
+      release();
     }
   }
 }
