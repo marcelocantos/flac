@@ -8,7 +8,7 @@ import refdata from '../refdata/Refdata';
 
 import { 输入RE, 输入字RE } from './InputRE';
 import 汉字 from './Word';
-import { 条目清单 } from './Decorate';
+import * as Decorate from './Decorate';
 
 const 有效音节 = refdata.dict.validSyllables;
 
@@ -64,8 +64,10 @@ export default function 回答({字, 分数, 定义, 提交}: 回答特性): JSX
     <Form>
       <Form.Label htmlFor="回答">
         Enter the pinyin for{' '}
-        <汉字 字={字} 分数={分数} 定义={<条目清单 清单={refdata.dict.entries[字]}/>}/>
-        {定义 && <>: {定义}</>}
+        <汉字 字={字} 分数={分数}
+          定义={<Decorate.条目清单 清单={refdata.dict.entries[字]}/>}
+        />
+        {定义 && <>: <Decorate.定义 def={定义}/></>}
         .
       </Form.Label>
       <InputGroup>

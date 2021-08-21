@@ -10,7 +10,7 @@ export type All = (params?: Params) => Promise<Row[]>;
 export type Get = (params?: Params) => Promise<Row | undefined>;
 export type Run = (params?: Params) => Promise<Result>;
 
-const log = false;
+const log = true;
 
 function promise<T>(
   obj: unknown,

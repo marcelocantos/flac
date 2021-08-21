@@ -16,7 +16,7 @@ export function 定义({def}: {def: string}): JSX.Element {
 	def = def.replace(/\bclassifier for\b/gu, "🆑➤");
 	const segments: JSX.Element[] = [];
 	for (let i = 0; ; i++) {
-		const m = def.match(/^(.*?)(\p{Script=Han}+)?\[((?:\w+\d\s+)*\w+\d)\](.*)/iu);
+		const m = def.match(/^(.*?)(\p{Script=Han}+)?\[((?:(?:🙈|\w+\d)\s+)*(?:🙈|\w+\d))\](.*)/iu);
 		if (!m) {
 			segments.push(<React.Fragment key={i}>{def}</React.Fragment>);
 			break;
@@ -53,7 +53,7 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 	const groups: group[] = [
 		new group("to ", "", "to… "),
 		new group("abbr. for ", "", "abbr… "),
-		new group("classifier for "),
+		new group("classifier for ", "", "🆑 for… "),
 		new group("(grammatical equivalent of ", ")", "(gramm ≣… "),
 		new group("(indicates ", ")", "(indic… "),
 	];
@@ -68,7 +68,7 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 					group.first = grouped.length;
 					grouped.push({group, defs: []});
 				}
-				grouped[group.first].defs.push(def.replace(group.regex, '$1'));
+				grouped[group.first].defs.push(def);
 				break;
 			}
 		}
@@ -83,14 +83,16 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 		<table className="定义清单"><tbody>
 			{grouped.map((g, i) =>
 				<tr key={i}>{
-					g.group
+					g.group && g.defs.length > 1
 					? <>
 							<td/>
 							<td>
 								{g.group.replace ?? g.group.prefix}
 								<Delim delim=", "
 									list={g.defs.map((d, i) =>
-										<索引的 key={i} i={n++}><定义 def={d}/></索引的>
+										<索引的 key={i} i={n++}>
+											<定义 def={d.replace(g.group.regex, '$1')}/>
+										</索引的>
 									)}
 								/>
 								{g.group.suffix}
@@ -110,11 +112,15 @@ interface 条目清单特性 {
 	清单: Entries,
 }
 
+function PinyinCompare(a: string, b: string): number {
+	return Pinyin.compare(new Pinyin(a), new Pinyin(b));
+}
+
 export function 条目清单({清单}: 条目清单特性): JSX.Element {
 	return (
 		<Table>
 			<tbody>
-				{Object.keys(清单.entries).sort().map(条目名 =>
+				{Object.keys(清单.entries).sort(PinyinCompare).map(条目名 =>
 					<tr key={条目名}>
 						<th>{<Pinyin.HTML pinyin={条目名}/>}</th>
 						<td><定义清单 清单={清单.entries[条目名].definitions}/></td>

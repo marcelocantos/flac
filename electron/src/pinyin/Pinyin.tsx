@@ -35,7 +35,7 @@ export default class Pinyin {
       }
       this.consumed = groups[0].length;
       pinyin = {
-        syllable: groups[2].replace('v', 'ü').replace('u:', 'ü'),
+        syllable: (groups[1] ?? groups[2]).replace('v', 'ü').replace('u:', 'ü'),
         tone: Number.parseInt(groups[3]),
       }
     }
@@ -61,19 +61,9 @@ export default class Pinyin {
     return (pinyin as Pinyin).html(props);
   }
 
+  static coll = Intl.Collator(undefined, {sensitivity: 'base'});
+
   static compare(a: Pinyin, b: Pinyin): number {
-    const aLower = a.syllable.toLowerCase();
-    const bLower = b.syllable.toLowerCase();
-    if (aLower < bLower) {
-      return -1;
-    } else if (aLower > bLower) {
-      return 1;
-    } else if (a.syllable < b.syllable) {
-      return -1;
-    } else if (a.syllable > b.syllable) {
-      return 1;
-    } else {
-      return a.tone - b.tone
-    }
+    return Pinyin.coll.compare(a.syllable, b.syllable) || (a.tone - b.tone);
   }
 }
