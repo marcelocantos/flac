@@ -8,6 +8,7 @@ export default function 随机定义(
   汉字: string,
   条目组: Entries,
 ): {定义: string, 条目组: Entries} {
+  console.log({随机定义: {汉字, 条目组}});
   const 拼音清单 = Object.keys(条目组.entries);
   if (拼音清单.length === 1) {
     return {定义: "", 条目组: 条目组};
@@ -27,6 +28,22 @@ export default function 随机定义(
   const pinyinRE = new RegExp(`\\b${拼音}\\b`, 'giu');
   for (let 定义 of 定义清单.definitions) {
     console.log({定义, 拼音});
+    let 复写 = false;
+    for (const 拼音2 of 拼音清单) {
+      if (拼音2 !== 拼音) {
+        for (const 定义2 of 条目组.entries[拼音2].definitions) {
+          if (定义2 === 定义) {
+            复写 = true;
+            break;
+          }
+        }
+      }
+      if (复写) break;
+    }
+    if (复写) {
+      console.log("duplicate", {拼音, 定义});
+      continue;
+    }
     定义 = 定义.replaceAll(pinyinRE, "🙈");
     if (定义.match(看RE)) {
       候选定义.push(定义);
