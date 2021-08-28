@@ -63,7 +63,7 @@ export default function 随机定义(
   for (const 拼音2 of 拼音清单) {
     if (拼音2 !== 拼音) {
       for (const 定义2 of 条目组.entries[拼音2].definitions) {
-        if (定义2 === 定义) {
+        if (定义 === "surname" ? 定义2.startsWith("surname ") : 定义2 === 定义) {
           新条目.entries[拼音2] = 条目组.entries[拼音2];
           break;
         }
