@@ -13,9 +13,11 @@ interface 汉和拼音字特性 {
 
 export default function 汉和拼音字({汉, 拼音}: 汉和拼音字特性): JSX.Element {
   return (
-    <div className="汉和拼音字">
-      {汉 && <div className="汉">{汉}</div>}
-      <div className="拼音"><div><Word.HTML word={拼音}/></div></div>
-    </div>
+    汉
+    ? <div className="汉和拼音字">
+        {<div className="汉">{汉}</div>}
+        <div className="拼音"><Word.HTML word={拼音}/></div>
+      </div>
+    : <Word.HTML word={拼音}/>
   );
 }
