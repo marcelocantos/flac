@@ -21,14 +21,14 @@ export default function 随机定义(
 
   const 候选定义: string[] = [];
   let 见 = -1;
-  const 正则表达式 = new RegExp(
+  const 看RE = new RegExp(
     `^(?:also written |also pr. |CL:)|^(?:(?:unofficial )?variant of|see) .*\\b${拼音}\\b`,
     'iu');
   const pinyinRE = new RegExp(`\\b${拼音}\\b`, 'giu');
   for (let 定义 of 定义清单.definitions) {
     console.log({定义, 拼音});
     定义 = 定义.replaceAll(pinyinRE, "🙈");
-    if (定义.match(正则表达式)) {
+    if (定义.match(看RE)) {
       候选定义.push(定义);
       见 = 候选定义.length;
     } else if (定义.startsWith("surname ")) {
