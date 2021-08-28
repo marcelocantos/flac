@@ -8,7 +8,13 @@ import { Entries } from '../refdata/Refdata';
 
 import 汉和拼音字 from './HanAndPinyinWord';
 
-export function 装饰定义({定义, 不见恶}: {定义: string, 不见恶?: string}): JSX.Element {
+type 装饰定义特性 = {
+	定义: string;
+	不见恶?: string;
+	量?: number;
+}
+
+export function 装饰定义({定义, 不见恶, 量}: 装饰定义特性): JSX.Element {
 	定义 = 定义.replace("'", "’");
 	定义 = 定义.replace(/Taiwan pr. /gu, "🇹🇼  ");
 	定义 = 定义.replace(/(?:\p{Script=Han}+\|)(\p{Script=Han}+)/gu, "$1");
@@ -29,7 +35,7 @@ export function 装饰定义({定义, 不见恶}: {定义: string, 不见恶?: s
 		);
 		定义 = 后;
 	}
-	return <>{segments}</>;
+	return <>{segments}{(量 ?? 1) > 1 && <> (×{量})</>}</>;
 }
 
 export function 索引的({i, children}: {i: number, children?: React.ReactNode}): JSX.Element {

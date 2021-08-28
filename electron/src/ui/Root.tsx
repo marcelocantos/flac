@@ -66,6 +66,9 @@ export default function App(): JSX.Element {
     }
   }
 
+  const 定义的数目 = 条目组 ? Object.keys(条目组.entries).length : 1;
+  console.log({定义的数目, 条目组});
+
   return (
     <Container fluid className="Container">
       <Row>
@@ -75,7 +78,7 @@ export default function App(): JSX.Element {
         <结果清单 log={[]} streak={[]}/>
       </Col>
       <Row className="input">
-        <回答 字={字 || "..."} 分数={分数} 定义={定义} 提交={提交}/>
+        <回答 词={字 || "..."} 分数={分数} 定义={定义} 量={定义的数目} 提交={提交}/>
       </Row>
     </Container>
   );

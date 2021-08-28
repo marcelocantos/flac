@@ -28,22 +28,6 @@ export default function 随机定义(
   const pinyinRE = new RegExp(`\\b${拼音}\\b`, 'giu');
   for (let 定义 of 定义清单.definitions) {
     console.log({定义, 拼音});
-    let 复写 = false;
-    for (const 拼音2 of 拼音清单) {
-      if (拼音2 !== 拼音) {
-        for (const 定义2 of 条目组.entries[拼音2].definitions) {
-          if (定义2 === 定义) {
-            复写 = true;
-            break;
-          }
-        }
-      }
-      if (复写) break;
-    }
-    if (复写) {
-      console.log("duplicate", {拼音, 定义});
-      continue;
-    }
     定义 = 定义.replaceAll(pinyinRE, "🙈");
     if (定义.match(看RE)) {
       候选定义.push(定义);
@@ -64,5 +48,17 @@ export default function 随机定义(
   if (候选定义.length === 0) {
     throw new Error(`no useful definitions for ${汉字}: ${定义清单}`);
   }
-  return {定义: 随机选择(候选定义), 条目组: 新条目};
+
+  const 定义 = 随机选择(候选定义);
+  for (const 拼音2 of 拼音清单) {
+    if (拼音2 !== 拼音) {
+      for (const 定义2 of 条目组.entries[拼音2].definitions) {
+        if (定义2 === 定义) {
+          新条目.entries[拼音2] = 条目组.entries[拼音2];
+          break;
+        }
+      }
+    }
+  }
+  return {定义, 条目组: 新条目};
 }

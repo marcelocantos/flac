@@ -22,14 +22,15 @@ const 有效前缀 = (() => {
   return ret
 })();
 
-interface 回答特性 {
-  字: string;
+type 回答特性 = {
+  词: string;
   分数: number;
   定义?: string;
+  量?: number;
   提交: (回答: string) => Promise<boolean>;
 }
 
-export default function 回答({字, 分数, 定义, 提交}: 回答特性): JSX.Element {
+export default function 回答({词, 分数, 定义, 量, 提交}: 回答特性): JSX.Element {
   const [输入, 设置输入] = useState("");
   const [错误, 设置错误] = useState(false);
 
@@ -64,10 +65,10 @@ export default function 回答({字, 分数, 定义, 提交}: 回答特性): JSX
     <Form>
       <Form.Label htmlFor="回答">
         Enter the pinyin for{' '}
-        <汉字 字={字} 分数={分数}
-          定义={<Decorate.条目清单 清单={refdata.dict.entries[字]}/>}
+        <汉字 字={词} 分数={分数}
+          定义={<Decorate.条目清单 清单={refdata.dict.entries[词]}/>}
         />
-        {定义 && <>&nbsp;&nbsp;👉&nbsp;&nbsp;<Decorate.装饰定义 定义={定义} 不见恶={字}/></>}
+        {定义 && <>&nbsp;&nbsp;👉&nbsp;&nbsp;<Decorate.装饰定义 定义={定义} 不见恶={词} 量={量}/></>}
         .
       </Form.Label>
       <InputGroup>
