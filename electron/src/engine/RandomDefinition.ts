@@ -22,6 +22,7 @@ export default function 随机定义(
 
   const 候选定义: string[] = [];
   let 见 = -1;
+  let 量词 = -1;
   const 看RE = new RegExp(
     `^(?:also written |also pr. |CL:)|^(?:(?:unofficial )?variant of|see) .*\\b${拼音}\\b`,
     'iu');
@@ -32,11 +33,20 @@ export default function 随机定义(
     if (定义.match(看RE)) {
       候选定义.push(定义);
       见 = 候选定义.length;
+    } else if (定义.startsWith("CL:")) {
+      候选定义.push(定义);
+      量词 = 候选定义.length;
     } else if (定义.startsWith("surname ")) {
       候选定义.push("surname");
     } else {
       候选定义.push(定义);
     }
+  }
+
+  // "CL:..." aren't great choices of definitions to test. Avoid
+  // unless no other options reman.
+  if (量词 != -1 && 候选定义.length > 1) {
+    候选定义.splice(量词, 1);
   }
 
   // "(see|variant of) ..." aren't great choices of definitions to test. Avoid
