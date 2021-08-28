@@ -38,7 +38,9 @@ export default function 回答({词, 分数, 定义, 量, 提交}: 回答特性)
 
   function 接受(文字: string): boolean {
     const 匹配 = 文字.match(输入RE);
-    return 匹配 && 有效前缀.has(匹配[2]) && ![...文字.matchAll(输入字RE)].some(([, 匹配]) => !有效前缀.has(匹配));
+    return 匹配 &&
+      (匹配[3] ? 匹配[2] in 有效音节 : 有效前缀.has(匹配[2])) &&
+      ![...文字.matchAll(输入字RE)].some(([, 匹配]) => !有效前缀.has(匹配));
   }
 
   function 检查输入(事件: React.ChangeEvent<any>) {
