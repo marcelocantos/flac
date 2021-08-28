@@ -2,7 +2,7 @@ import React from 'react';
 
 import Table from 'react-bootstrap/Table';
 
-import Pinyin from '../pinyin/Pinyin';
+import Word from '../pinyin/Word';
 import Delim from '../reactutil/Delim';
 import { Entries } from '../refdata/Refdata';
 
@@ -112,17 +112,18 @@ interface 条目清单特性 {
 	清单: Entries,
 }
 
-function PinyinCompare(a: string, b: string): number {
-	return Pinyin.compare(new Pinyin(a), new Pinyin(b));
+function WordCompare(a: string, b: string): number {
+	return Word.compare(new Word(a), new Word(b));
 }
 
 export function 条目清单({清单}: 条目清单特性): JSX.Element {
+	console.log(Object.keys(清单.entries))
 	return (
 		<Table>
 			<tbody>
-				{Object.keys(清单.entries).sort(PinyinCompare).map(条目名 =>
+				{Object.keys(清单.entries).sort(WordCompare).map(条目名 =>
 					<tr key={条目名}>
-						<th>{<Pinyin.HTML pinyin={条目名}/>}</th>
+						<th>{<Word.HTML word={条目名}/>}</th>
 						<td><定义清单 清单={清单.entries[条目名].definitions}/></td>
 					</tr>
 				)}
