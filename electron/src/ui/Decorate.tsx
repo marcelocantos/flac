@@ -8,17 +8,17 @@ import { Entries } from '../refdata/Refdata';
 
 import 汉和拼音字 from './HanAndPinyinWord';
 
-export function 定义({def}: {def: string}): JSX.Element {
-	def = def.replace("'", "’");
-	def = def.replace(/Taiwan pr. /gu, "🇹🇼  ");
-	def = def.replace(/(?:\p{Script=Han}+\|)(\p{Script=Han}+)/gu, "$1");
-	def = def.replace(/\bCL:(\p{Script=Han}+)/gu, "🆑:$1");
-	def = def.replace(/\bclassifier for\b/gu, "🆑➤");
+export function 装饰定义({定义, 不见恶}: {定义: string, 不见恶?: string}): JSX.Element {
+	定义 = 定义.replace("'", "’");
+	定义 = 定义.replace(/Taiwan pr. /gu, "🇹🇼  ");
+	定义 = 定义.replace(/(?:\p{Script=Han}+\|)(\p{Script=Han}+)/gu, "$1");
+	定义 = 定义.replace(/\bCL:(\p{Script=Han}+)/gu, "🆑:$1");
+	定义 = 定义.replace(/\bclassifier for\b/gu, "🆑➤");
 	const segments: JSX.Element[] = [];
 	for (let i = 0; ; i++) {
-		const m = def.match(/^(.*?)(\p{Script=Han}+)?\[((?:(?:🙈|\w+\d)\s+)*(?:🙈|\w+\d))\](.*)/iu);
+		const m = 定义.match(/^(.*?)(\p{Script=Han}+)?\[((?:(?:🙈|\w+\d)\s+)*(?:🙈|\w+\d))\](.*)/iu);
 		if (!m) {
-			segments.push(<React.Fragment key={i}>{def}</React.Fragment>);
+			segments.push(<React.Fragment key={i}>{定义}</React.Fragment>);
 			break;
 		}
 		const [, 前, 汉, 拼音, 后] = m;
@@ -27,7 +27,7 @@ export function 定义({def}: {def: string}): JSX.Element {
 				{前}<汉和拼音字 汉={汉} 拼音={拼音}/>
 			</React.Fragment>
 		);
-		def = 后;
+		定义 = 后;
 	}
 	return <>{segments}</>;
 }
@@ -91,7 +91,7 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 								<Delim delim=", "
 									list={g.defs.map((d, i) =>
 										<索引的 key={i} i={n++}>
-											<定义 def={d.replace(g.group.regex, '$1')}/>
+											<装饰定义 定义={d.replace(g.group.regex, '$1')}/>
 										</索引的>
 									)}
 								/>
@@ -100,7 +100,7 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 						</>
 					: <>
 							<td><索引的 i={n++}/></td>
-							<td><定义 def={g.defs[0]}/></td>
+							<td><装饰定义 定义={g.defs[0]}/></td>
 						</>
 				}</tr>
 			)}
