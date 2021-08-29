@@ -59,7 +59,7 @@ export function 定义清单({清单}: {清单: string[]}): JSX.Element {
 	const groups: group[] = [
 		new group("to ", "", "to… "),
 		new group("abbr. for ", "", "abbr… "),
-		new group("classifier for ", "", "🆑 for… "),
+		new group("classifier for ", "", "🆑➤ "),
 		new group("(grammatical equivalent of ", ")", "(gramm ≣… "),
 		new group("(indicates ", ")", "(indic… "),
 	];
