@@ -5,11 +5,12 @@ import { Entries } from '../refdata/Refdata';
 export default class Outcome {
   html?: ({分数}: {分数: number}) => JSX.Element;
   Good:     Word[] = [];
-	Bad:      Word[] = [];
-	TooShort: Word[] = [];
-	BadTones: Word[] = [];
-	Missing = 0;
-	Easy = false;
+  Bad:      Word[] = [];
+  TooShort: Word[] = [];
+  BadTones: Word[] = [];
+  Missing = 0;
+  Easy = false;
+  Score?: number;
 
   constructor(
     public Word:    string,

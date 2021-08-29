@@ -71,7 +71,7 @@ export default function App(): JSX.Element {
         <p className="welcome">欢迎来到flac，我们一起学中文吧！</p>
       </Row>
       <Col className="main">
-        <结果清单 log={[]} streak={[]}/>
+        <结果清单 汇报={汇报}/>
       </Col>
       <Row className="input">
         <回答 词={字 || "..."} 分数={分数} 定义={定义} 量={定义的数目} 提交={提交}/>

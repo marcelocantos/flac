@@ -42,6 +42,11 @@ p.welcome {
   color: rgb(22, 122, 223);
 }
 
+.main .字 {
+  font-weight: 500;
+  color: rgb(0, 170, 0);
+}
+
 .定义序数词 {
   font-weight: bold;
   margin-right: 0.1em;
