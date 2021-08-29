@@ -4,6 +4,8 @@ import Proxy from '../renderer/data/Proxy';
 import { Refdata } from '../refdata/Refdata';
 import Outcome from '../outcome/Outcome';
 
+const 记录 = false;
+
 function logScore(score: number): number {
 	return Math.log(score) / Math.log(4000)
 }
@@ -113,7 +115,7 @@ export default class 汇报类 {
   }
 
   async setScoreAndPos(word: string, score: number, pos: number): Promise<void> {
-    console.log('setScoreAndPos', {word, score, pos});
+    if (记录) console.log('setScoreAndPos', {word, score, pos});
     await this.db.UpdateScoreAndPos(word, score, pos);
   }
 

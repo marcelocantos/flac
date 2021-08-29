@@ -8,6 +8,8 @@ import { Entries } from '../refdata/Refdata';
 
 import 汉和拼音字 from './HanAndPinyinWord';
 
+const 记录 = false;
+
 type 装饰定义特性 = {
 	定义: string;
 	不见恶?: string;
@@ -123,7 +125,7 @@ function WordCompare(a: string, b: string): number {
 }
 
 export function 条目清单({清单}: 条目清单特性): JSX.Element {
-	console.log(Object.keys(清单.entries))
+	if (记录) console.log(Object.keys(清单.entries))
 	return (
 		<Table>
 			<tbody>

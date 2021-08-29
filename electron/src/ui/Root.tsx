@@ -17,7 +17,7 @@ import 汉字 from './Word';
 
 import './Root.css';
 
-const 记录 = true;
+const 记录 = false;
 
 const 条目数据 = refdata.dict.entries;
 
@@ -35,10 +35,8 @@ export default function App(): JSX.Element {
     const {word, score} = await 数据.HeadWord;
     设置字(word);
     设置分数(score ?? 0);
-    console.log('数据.HeadWord', {word, score, 新定义, 定义});
     if (新定义 || typeof 定义 === "undefined") {
       const {定义, 条目组} = 随即定义(word, 条目数据[word]);
-      console.log({定义, 条目组});
       设置定义(定义);
       设置条目组(条目组);
     }
@@ -54,7 +52,6 @@ export default function App(): JSX.Element {
     if (产物.及格) {
       产物.html = ({分数}) => <汉字 字={字} 分数={分数} 定义={<条目清单 清单={条目组}/>}/>;
       await 汇报.好(字, 产物, false);
-      console.log('好！');
       await 更新字和分数(true);
       return true;
     } else {
@@ -67,7 +64,6 @@ export default function App(): JSX.Element {
   }
 
   const 定义的数目 = 条目组 ? Object.keys(条目组.entries).length : 1;
-  console.log({定义的数目, 条目组});
 
   return (
     <Container fluid className="Container">

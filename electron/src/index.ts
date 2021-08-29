@@ -13,7 +13,7 @@ import refdata from './refdata/Refdata';
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
-const log = false;
+const 记录 = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -27,7 +27,7 @@ const database = ((): (() => Promise<Database>) => {
   return async (): Promise<Database> => {
     if (!data) {
       const db = await AsyncDB.open(flacFilename);
-      if (log) console.log({words: refdata.wordList.words});
+      if (记录) console.log({words: refdata.wordList.words});
       data = await Database.build(db, "", refdata.wordList.words);
     }
     return data;
@@ -56,10 +56,10 @@ const createWindow = (): void => {
     try {
       const d = await database();
       const result = await (d as any)[params[0] as string](...params.slice(1));
-      if (log) console.log('call', params[0], params.slice(1), '=>', result);
+      if (记录) console.log('call', params[0], params.slice(1), '=>', result);
       return {result};
     } catch (error) {
-      if (log) console.log('❌ call', params[0], params.slice(1), ' =>', error);
+      if (记录) console.log('❌ call', params[0], params.slice(1), ' =>', error);
       return {error};
     }
   });
@@ -68,10 +68,10 @@ const createWindow = (): void => {
     try {
       const d = await database();
       const result = await (d as any)[params[0] as string];
-      if (log) console.log('get', params[0], '=>', result);
+      if (记录) console.log('get', params[0], '=>', result);
       return {result};
     } catch (error) {
-      if (log) console.log('❌ get', params[0], ' =>', error);
+      if (记录) console.log('❌ get', params[0], ' =>', error);
       return {error};
     }
   });

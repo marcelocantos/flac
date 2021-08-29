@@ -5,12 +5,14 @@ import Lex from '../pinyin/Lex';
 import Outcome from '../outcome/Outcome';
 import { Entries } from '../refdata/Refdata';
 
+const 记录 = false;
+
 export default function Assess(
 	word: string,
 	entries: Entries,
 	answer: string,
 ): Outcome {
-	console.log({word, entries, answer});
+	if (记录) console.log({word, entries, answer});
 	const o = new Outcome(word, entries);
 	const answerAlts = AnswerAlts(word, answer);
 	if (answerAlts.length > 0) {

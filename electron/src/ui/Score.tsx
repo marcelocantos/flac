@@ -1,11 +1,13 @@
 import React from 'react';
 
-interface Props {
+const logBase = Math.log(4000);
+
+type 分数条特性 = {
   分数: number;
 }
 
-export default function 分数条({分数}: Props): JSX.Element {
-  const 对数分数 = Math.log(1 + 分数) / Math.log(1000);
+export default function 分数条({分数}: 分数条特性): JSX.Element {
+  const 对数分数 = Math.log(1 + 分数) / logBase;
 
   return (
     <svg viewBox="0 0 8 21" xmlns="http://www.w3.org/2000/svg"

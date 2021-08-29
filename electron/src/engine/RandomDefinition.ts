@@ -1,5 +1,7 @@
 import { Entries } from '../refdata/Refdata';
 
+const 记录 = false;
+
 function 随机选择<T>(数组: T[]): T {
   return 数组[Math.floor(Math.random() * 数组.length)];
 }
@@ -8,7 +10,7 @@ export default function 随机定义(
   汉字: string,
   条目组: Entries,
 ): {定义: string, 条目组: Entries} {
-  console.log({随机定义: {汉字, 条目组}});
+  if (记录) console.log({随机定义: {汉字, 条目组}});
   const 拼音清单 = Object.keys(条目组.entries);
   if (拼音清单.length === 1) {
     return {定义: "", 条目组: 条目组};
@@ -28,7 +30,7 @@ export default function 随机定义(
     'iu');
   const pinyinRE = new RegExp(`\\b${拼音}\\b`, 'giu');
   for (let 定义 of 定义清单.definitions) {
-    console.log({定义, 拼音});
+    if (记录) console.log({定义, 拼音});
     定义 = 定义.replaceAll(pinyinRE, "🙈");
     if (定义.match(看RE)) {
       候选定义.push(定义);
