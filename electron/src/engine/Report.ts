@@ -5,12 +5,12 @@ import Outcome from '../outcome/Outcome';
 const 记录 = false;
 
 export default class 汇报类 {
-	refreshCount: number;
+  refreshCount: number;
 
-	历史: Outcome[][] = [];
-	好组: Outcome[] = [];
+  历史: Outcome[][] = [];
+  好组: Outcome[] = [];
 
-	onScoreChangedFunc: (word: string, score: number) => void;
+  onScoreChangedFunc: (word: string, score: number) => void;
 
   constructor(
     private db: Proxy,
