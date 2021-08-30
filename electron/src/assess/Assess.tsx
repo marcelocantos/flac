@@ -13,12 +13,12 @@ export default function Assess(
   answer: string,
 ): Outcome {
   if (记录) console.log({word, entries, answer});
-  const o = new Outcome(word, entries);
+  const outcome = new Outcome(word, entries, answer);
   const answerAlts = AnswerAlts(word, answer);
   if (answerAlts.length > 0) {
-    assess(entries, answerAlts, o);
+    assess(entries, answerAlts, outcome);
   }
-  return o;
+  return outcome;
 }
 
 function AnswerAlts(word: string, answer: string): Alts {

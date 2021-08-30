@@ -42,9 +42,12 @@ p.welcome {
   color: rgb(22, 122, 223);
 }
 
-.main .字 {
-  font-weight: 500;
+.字.good {
   color: rgb(0, 170, 0);
+}
+
+.字.bad {
+  color: rgb(170, 0, 0);
 }
 
 .定义序数词 {

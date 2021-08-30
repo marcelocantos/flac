@@ -3,7 +3,6 @@ import Word from '../pinyin/Word';
 import { Entries } from '../refdata/Refdata';
 
 export default class Outcome {
-  html?: ({分数}: {分数: number}) => JSX.Element;
   Good:     Word[] = [];
   Bad:      Word[] = [];
   TooShort: Word[] = [];
@@ -15,6 +14,7 @@ export default class Outcome {
   constructor(
     public Word:    string,
     public Entries: Entries,
+    public Answer:  string,
   ){}
 
   get 及格(): boolean {

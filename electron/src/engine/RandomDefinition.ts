@@ -30,15 +30,18 @@ export default function 随机定义(
     'iu');
   const pinyinRE = new RegExp(`\\b${拼音}\\b`, 'giu');
   for (let 定义 of 定义清单.definitions) {
-    if (记录) console.log({定义, 拼音});
     定义 = 定义.replaceAll(pinyinRE, "🙈");
+    if (记录) console.log({定义, 拼音});
     if (定义.match(看RE)) {
-      候选定义.push(定义);
+      if (记录) console.log('看RE');
       见 = 候选定义.length;
-    } else if (定义.startsWith("CL:")) {
       候选定义.push(定义);
+    } else if (定义.startsWith("CL:")) {
+      if (记录) console.log('CL:');
       量词 = 候选定义.length;
+      候选定义.push(定义);
     } else if (定义.startsWith("surname ")) {
+      if (记录) console.log('surname');
       候选定义.push("surname");
     } else {
       候选定义.push(定义);

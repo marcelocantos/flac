@@ -11,9 +11,7 @@ import refdata, { Entries } from '../refdata/Refdata';
 import Proxy from '../renderer/data/Proxy';
 
 import 回答 from './Answer';
-import { 条目清单 } from './Decorate';
 import 结果清单 from './Results';
-import 汉字 from './Word';
 
 import './Root.css';
 
@@ -25,7 +23,7 @@ const 数据 = new Proxy();
 const 汇报 = new 汇报类(数据, refdata);
 
 export default function App(): JSX.Element {
-  const [字, 设置字] = useState("");
+  const [词, 设置词] = useState("");
   const [分数, 设置分数] = useState(0);
   const [定义, 设置定义] = useState<string>();
   const [条目组, 设置条目组] = useState<Entries>();
@@ -33,7 +31,7 @@ export default function App(): JSX.Element {
 
   async function 更新字和分数(新定义: boolean): Promise<void> {
     const {word, score} = await 数据.HeadWord;
-    设置字(word);
+    设置词(word);
     设置分数(score ?? 0);
     if (新定义 || typeof 定义 === "undefined") {
       const {定义, 条目组} = 随即定义(word, 条目数据[word]);
@@ -48,14 +46,13 @@ export default function App(): JSX.Element {
   })
 
   async function 提交(回答: string): Promise<boolean> {
-    const 产物 = Assess(字, 条目组, 回答)
+    const 产物 = Assess(词, 条目组, 回答);
+    产物.Entries = 条目数据[词];
     if (产物.及格) {
-      产物.html = ({分数}) => <汉字 字={字} 分数={分数} 定义={<条目清单 清单={条目组}/>}/>;
-      await 汇报.好(字, 产物, false);
+      await 汇报.好(词, 产物, false);
       await 更新字和分数(true);
       return true;
     } else {
-      产物.html = ({分数}) => <汉字 字={字} 分数={分数} 定义={<条目清单 清单={条目组}/>}/>;
       const 尝试包装器 = {尝试};
       await 汇报.不好(产物, false, 尝试包装器);
       设置尝试(尝试包装器.尝试);
@@ -74,7 +71,7 @@ export default function App(): JSX.Element {
         <结果清单 汇报={汇报}/>
       </Col>
       <Row className="input">
-        <回答 词={字 || "..."} 分数={分数} 定义={定义} 量={定义的数目} 提交={提交}/>
+        <回答 词={词 || "..."} 分数={分数} 定义={定义} 量={定义的数目} 提交={提交}/>
       </Row>
     </Container>
   );
