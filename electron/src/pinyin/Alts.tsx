@@ -7,6 +7,11 @@ import Word from './Word';
 
 const pinyinsRE = /^([a-zü]+)([1-5]+)$/i;
 
+interface AltsProps {
+  alts: Alts | string | Word[];
+  [attrs: string]: unknown;
+}
+
 export default class Alts {
   public words: Word[];
 
@@ -40,8 +45,15 @@ export default class Alts {
   get pinyin(): string { return this.words.map(w => w.pinyin).join('/'); }
   get raw   (): string { return this.words.map(w => w.raw   ).join('/'); }
 
-  get html(): JSX.Element {
-    return <Delim list={this.words.map(w => w.html)} delim=", "/>;
+  html(props: {[attrs: string]: unknown}): JSX.Element {
+    return <Delim list={this.words.map(w => w.html(props))} delim=", "/>;
+  }
+
+  static HTML({alts, ...props}: AltsProps): JSX.Element {
+    if (!(alts instanceof Alts)) {
+      alts = new Alts(alts);
+    }
+    return alts.html(props);
   }
 
   static compare(a: Alts, b: Alts): number {

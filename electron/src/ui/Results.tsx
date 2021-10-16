@@ -1,7 +1,7 @@
 import React from 'react';
 
 import 汇报类 from '../engine/Report';
-import Word from '../pinyin/Word';
+import Alts from '../pinyin/Alts';
 
 import { 条目清单 } from './Decorate';
 import 汉字 from './Word';
@@ -26,7 +26,7 @@ export default function 结果清单({汇报}: Props): JSX.Element {
             ? 结果组.map((结果, i) =>
                 <React.Fragment key={i}>
                   ❌&nbsp;&nbsp;
-                  <Word.HTML word={结果.Answer}/>
+                  <Alts.HTML alts={结果.Answer}/>
                   &nbsp; ≠ &nbsp;
                   <汉字
                     className="bad"
