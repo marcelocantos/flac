@@ -1,0 +1,10 @@
+ipython
+pip>=22.2.2
+
+diskcache
+google-api-python-client
+google.cloud.texttospeech
+playsound
+PyObjC
+simpleaudio
+wcwidth

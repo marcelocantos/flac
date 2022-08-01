@@ -2,9 +2,92 @@
 # --------
 
 - 吧 吧 [bia1]
+- 剛剛 刚刚 [gang1 gang5]
 
 # Additions
 # ---------
+
+# 11
+租車 租车 [zu1 che1] /car rental/
+剛剛 刚刚 [gang1 gang1] /just recently/just a moment ago/
+
+# 13
+安享 安享 [an1 xiang3] /(老人) enjoy in peace/enjoy (happy life); live in ease and comfort/
+多遠 多远 [duo1 yuan3] /quite far/how far/
+約好 约好 [yue1 hao3] /make an appointment/have an appointment/agree; arrange/
+
+# 15
+聽聽 听听 [ting1 ting5] /listen to; give a hearing/wait a second/
+聰明 聪明 [cong1 ming2] /sharp ears and penetrating eyes/intelligence; quick wit/
+
+# 14
+酸味 酸味 [suan1 wei4] /tart flavour; acidity/priggishness; pedantry/
+一份 一份 [yi1 fen4] /[measure word] a portion/
+說過 说过 [shuo1 guo4] /said/
+酸辣 酸辣 [suan1 la4] /hot and sour/
+一遇 一遇 [yi1 yu4] /once in a while/
+銷戶 销户 [xiao1 hu4] /sold out/
+封信 封信 [feng1 xin4] /seal a letter/
+
+# 22
+能行 能行 [neng2 xing2] /be capable of; have the ability/be workable/yes; all right (expressing consent)/
+湖泊 湖泊 [hu2 bo2] /lake/
+
+# 23
+重啟 重启 [chong2 qi3] /to reboot/
+
+# 24
+回去 回去 [hui2 qu4] /to return; to go back; to be back/
+漫談 漫谈 [man4 tan2] /ramble/rambling/meander/discuss ... informally/
+
+# 31
+几天 几天 [ji3 tian1] /a few days/how many days?/
+
+# 32
+假如 假如 [jia3 ru2] /supposing/
+
+# 33
+有禮 有礼 [you3 li3] /show respect to; be polite; be courteous/polite; courteous/
+短短 短短 [duan3 duan3] /brief; short/
+
+# 34
+講過 讲过 [jiang3 guo4] /told; said/
+展會 展会 [zhan3 hui4] /exhibition/
+肘部 肘部 [zhou3 bu4] /elbow/
+幾位 几位 [ji3 wei4] /several/how many?/
+老話 老话 [lao3 hua4] /old saying; saying; adage/reminiscences; remarks about the old days/
+
+# 35
+裡面 里面 [li3 mian5] /inside/interior/also pr. [li3 mian5]/
+
+# 41
+被殺 被杀 [bei4 sha1] /to be killed/
+
+# 42
+再來 再来 [zai4 lai2] /come again/encore/request|order a repetition/
+大明 大明 [da4 ming2] /Ming dynasty/
+正題 正题 [zheng4 ti2] /main topic/main subject (or topic) of a talk or essay/(philosophy) thesis/
+太陽 太阳 [tai4 yang2] /sun/CL:個|个[ge4]/abbr. for 太陽穴|太阳穴[tai4 yang2 xue2]/
+
+# 43
+作好 作好 [zuo4 hao3] /finish; complete/
+大搞 大搞 [da4 gao3] /do something vigorously/do something big; make a big celebration/
+道理 道理 [dao4 li3] /reason/argument/sense/principle/basis/justification/CL:個|个[ge4]/
+夜裡 夜里 [ye4 li3] /during the night/at night/nighttime/
+那裡 那里 [na4 li3] /there/that place/
+
+# 44
+設限 设限 [she4 xian4] /set a limit/
+怕怕 怕怕 [pa4 pa4] /feeling scared or afraid/
+空位 空位 [kong4 wei4] /empty place/room (for sb)/
+
+# 45
+抱著 抱着 [bao4 zhe5] /hold in one's arms; embrace/
+後面 后面 [hou4 mian5] /rear/back/behind/later/afterwards/also pr. [hou4 mian5]/
+外面 外面 [wai4 mian5] /outside (also pr. [wai4 mian5] for this sense)/surface/exterior/external appearance/
+費用 费用 [fei4 yong5] /cost/expenditure/expense/CL:筆|笔[bi3],個|个[ge4]/
+
+#------------------------------------------------------------------------------
 
 # 1
 都是 都是 [dou1 shi4] /all/
