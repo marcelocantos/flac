@@ -47,7 +47,7 @@ def scorerepr(score):
         s += '⣿'
         # s += '█'
         logscore -= 8
-    
+
     return (s + ['','⡀','⡄','⡆','⡇','⣇','⣧','⣷'][logscore])
     # return s + ' ▏▎▍▌▋▊▉'[logscore]
 
@@ -262,12 +262,12 @@ def accents(pinyins):
 def accentsInPhrase(phrase):
     phrase = tradcharRE.sub('', phrase)
     return pinyinsRE.sub(
-        lambda m: '\033[1m%s[\033[0m%s\033[1m]\033[0m' % (m.group(1) or '', accents(m.group(2)),),
+        lambda m: f"\033[1m{m.group(1) or ''}[\033[0m{accents(m.group(2))}\033[1m]\033[0m",
         phrase)
 
 def pinyinTones(pinyin, tones):
     return '/'.join(accent(pinyin, t) for t in sorted(tones))
-    
+
 # class scoredb:
 #     def __init__(self):
 #         self.db = sqlite3.connect('flac.db')
